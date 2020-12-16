@@ -1,4 +1,5 @@
 #iex ((New-Object System.Net.WebClient).DownloadString('https://git.io/JLGaJ'))
+
 # Recive parameter elevated
 param([switch]$Elevated)
 
@@ -6,7 +7,7 @@ param([switch]$Elevated)
 if ([Security.Principal.WindowsIdentity]::GetCurrent().Groups -notcontains 'S-1-5-32-544') {
 	# Check if we have already tried to elevate, if not, try it
 	if (-Not $elevated) {
-		Start-Process powershell.exe -Verb RunAs -ArgumentList ('-noprofile -noexit -file "{0}" -elevated' -f ($myinvocation.MyCommand.Definition))
+		Start-Process powershell.exe -Verb RunAs -ArgumentList ("-noprofile -command iex ((New-Object System.Net.WebClient).DownloadString('https://git.io/JLGaJ')); -elevated" -f ($myinvocation.MyCommand.Definition))
 	}
 	exit
 }
