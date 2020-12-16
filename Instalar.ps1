@@ -1,4 +1,16 @@
-#Set-ExecutionPolicy Bypass -Scope Process -Force;iex ((New-Object System.Net.WebClient).DownloadString('https://git.io/JLGaJ'))
+#iex ((New-Object System.Net.WebClient).DownloadString('https://git.io/JLGaJ'))
+# Recive parameter elevated
+param([switch]$Elevated)
+
+# Check if we have admin, if not, try to elevate
+if ([Security.Principal.WindowsIdentity]::GetCurrent().Groups -notcontains 'S-1-5-32-544') {
+	# Check if we have already tried to elevate, if not, try it
+	if (-Not $elevated) {
+		Start-Process powershell.exe -Verb RunAs -ArgumentList ('-noprofile -noexit -file "{0}" -elevated' -f ($myinvocation.MyCommand.Definition))
+	}
+	exit
+}
+# Running in admin
 # Ask if we want to install all apps
 $fullInstall = Read-Host -Prompt 'Do a full install? [y/N]'
 
@@ -12,20 +24,20 @@ Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://cho
 # Create app instalation string
 $apps = "adoptopenjdk8openj9jre 7zip firefox"
 if ($fullInstall -contains 'y') {
-  $apps = $apps + " discord steam origin battle.net epicgameslauncher vscode paint.net gimp bitwarden goggalaxy cheatengine AdoptOpenJDK15openj9 python3 multimc powertoys"
+	$apps = $apps + " discord steam origin battle.net epicgameslauncher vscode paint.net gimp bitwarden goggalaxy cheatengine AdoptOpenJDK15openj9 python3 multimc powertoys"
 }
 
 # Get current graphics
 $graphics = Get-WmiObject win32_VideoController | Format-List Name
 
 if ($graphics -contains 'nvidia') {
-  $apps = $apps + " geforce-experience"
+	$apps = $apps + " geforce-experience"
 } elseif ($graphics -contains 'intel') {
-  $apps = $apps + " intel-graphics-driver"
-} else {
-  # AMD is not supported, opening web page for manual instalation
-  Write-Output $graphics
-  Start-Process https://www.amd.com/en/support
+	$apps = $apps + " intel-graphics-driver"
+} elseif ($graphics -contains 'radeon' -or $graphics -contains 'amd') {
+	# AMD is not supported, opening web page for manual instalation
+	Write-Output $graphics
+	Start-Process https://www.amd.com/en/support
 }
 
 # Install choco apps
@@ -44,7 +56,7 @@ Remove-Item -R "C:\ProgramData\Office2016x64"
 #
 Write-Host "Creating Restore Point incase something bad happens"
 Enable-ComputerRestore -Drive "C:\"
-Checkpoint-Computer -Description "RestorePoint1" -RestorePointType "MODIFY_SETTINGS"
+Checkpoint-Computer -Description "RestorePoint1" -RestorePointType "MODifY_SETTINGS"
 
 #
 Write-Host "Running O&O Shutup with Recommended Settings"
@@ -82,7 +94,7 @@ Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\ContentD
 Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" -Name "SubscribedContent-338389Enabled" -Type DWord -Value 0
 Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" -Name "SubscribedContent-353698Enabled" -Type DWord -Value 0
 Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" -Name "SystemPaneSuggestionsEnabled" -Type DWord -Value 0
-If (!(Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\CloudContent")) {
+if (!(Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\CloudContent")) {
 	New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\CloudContent" -Force | Out-Null
 }
 Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\CloudContent" -Name "DisableWindowsConsumerFeatures" -Type DWord -Value 1
@@ -95,7 +107,7 @@ Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\System" -Name 
 
 #
 Write-Host "Disabling Location Tracking..."
-If (!(Test-Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\location")) {
+if (!(Test-Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\location")) {
 	New-Item -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\location" -Force | Out-Null
 }
 Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\location" -Name "Value" -Type String -Value "Deny"
@@ -108,7 +120,7 @@ Set-ItemProperty -Path "HKLM:\SYSTEM\Maps" -Name "AutoUpdateEnabled" -Type DWord
 
 #
 Write-Host "Disabling Feedback..."
-If (!(Test-Path "HKCU:\SOFTWARE\Microsoft\Siuf\Rules")) {
+if (!(Test-Path "HKCU:\SOFTWARE\Microsoft\Siuf\Rules")) {
 	New-Item -Path "HKCU:\SOFTWARE\Microsoft\Siuf\Rules" -Force | Out-Null
 }
 Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Siuf\Rules" -Name "NumberOfSIUFInPeriod" -Type DWord -Value 0
@@ -118,14 +130,14 @@ Disable-ScheduledTask -TaskName "Microsoft\Windows\Feedback\Siuf\DmClientOnScena
 
 #
 Write-Host "Disabling Tailored Experiences..."
-If (!(Test-Path "HKCU:\SOFTWARE\Policies\Microsoft\Windows\CloudContent")) {
+if (!(Test-Path "HKCU:\SOFTWARE\Policies\Microsoft\Windows\CloudContent")) {
 	New-Item -Path "HKCU:\SOFTWARE\Policies\Microsoft\Windows\CloudContent" -Force | Out-Null
 }
 Set-ItemProperty -Path "HKCU:\SOFTWARE\Policies\Microsoft\Windows\CloudContent" -Name "DisableTailoredExperiencesWithDiagnosticData" -Type DWord -Value 1
 
 #
 Write-Host "Disabling Advertising ID..."
-If (!(Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\AdvertisingInfo")) {
+if (!(Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\AdvertisingInfo")) {
 	New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\AdvertisingInfo" | Out-Null
 }
 Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\AdvertisingInfo" -Name "DisabledByGroupPolicy" -Type DWord -Value 1
@@ -137,7 +149,7 @@ Disable-ScheduledTask -TaskName "Microsoft\Windows\Windows Error Reporting\Queue
 
 #
 Write-Host "Restricting Windows Update P2P only to local network..."
-If (!(Test-Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\DeliveryOptimization\Config")) {
+if (!(Test-Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\DeliveryOptimization\Config")) {
 	New-Item -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\DeliveryOptimization\Config" | Out-Null
 }
 Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\DeliveryOptimization\Config" -Name "DODownloadMode" -Type DWord -Value 1
@@ -188,7 +200,7 @@ Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\TimeZoneInformati
 #
 Write-Host "Disabling Hibernation..."
 Set-ItemProperty -Path "HKLM:\System\CurrentControlSet\Control\Session Manager\Power" -Name "HibernteEnabled" -Type Dword -Value 0
-If (!(Test-Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\FlyoutMenuSettings")) {
+if (!(Test-Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\FlyoutMenuSettings")) {
 	New-Item -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\FlyoutMenuSettings" | Out-Null
 }
 Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\FlyoutMenuSettings" -Name "ShowHibernateOption" -Type Dword -Value 0
@@ -206,7 +218,7 @@ Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\TaskMana
 
 #
 Write-Host "Showing file operations details..."
-If (!(Test-Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\OperationStatusManager")) {
+if (!(Test-Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\OperationStatusManager")) {
 	New-Item -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\OperationStatusManager" | Out-Null
 }
 Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\OperationStatusManager" -Name "EnthusiastMode" -Type DWord -Value 1
@@ -217,7 +229,7 @@ Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer
 
 #
 Write-Host "Hiding People icon..."
-If (!(Test-Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced\People")) {
+if (!(Test-Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced\People")) {
 	New-Item -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced\People" | Out-Null
 }
 Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced\People" -Name "PeopleBand" -Type DWord -Value 0
@@ -319,28 +331,28 @@ Write-Host "Stopping Edge from taking over as the default .PDF viewer"
 $NoPDF = "HKCR:\.pdf"
 $NoProgids = "HKCR:\.pdf\OpenWithProgids"
 $NoWithList = "HKCR:\.pdf\OpenWithList"
-If (!(Get-ItemProperty $NoPDF  NoOpenWith)) {
+if (!(Get-ItemProperty $NoPDF	NoOpenWith)) {
 	New-ItemProperty $NoPDF NoOpenWith
 }
-If (!(Get-ItemProperty $NoPDF  NoStaticDefaultVerb)) {
-	New-ItemProperty $NoPDF  NoStaticDefaultVerb
+if (!(Get-ItemProperty $NoPDF	NoStaticDefaultVerb)) {
+	New-ItemProperty $NoPDF	NoStaticDefaultVerb
 }
-If (!(Get-ItemProperty $NoProgids  NoOpenWith)) {
-	New-ItemProperty $NoProgids  NoOpenWith
+if (!(Get-ItemProperty $NoProgids	NoOpenWith)) {
+	New-ItemProperty $NoProgids	NoOpenWith
 }
-If (!(Get-ItemProperty $NoProgids  NoStaticDefaultVerb)) {
-	New-ItemProperty $NoProgids  NoStaticDefaultVerb
+if (!(Get-ItemProperty $NoProgids	NoStaticDefaultVerb)) {
+	New-ItemProperty $NoProgids	NoStaticDefaultVerb
 }
-If (!(Get-ItemProperty $NoWithList  NoOpenWith)) {
-	New-ItemProperty $NoWithList  NoOpenWith
+if (!(Get-ItemProperty $NoWithList	NoOpenWith)) {
+	New-ItemProperty $NoWithList	NoOpenWith
 }
-If (!(Get-ItemProperty $NoWithList  NoStaticDefaultVerb)) {
-	New-ItemProperty $NoWithList  NoStaticDefaultVerb
+if (!(Get-ItemProperty $NoWithList	NoStaticDefaultVerb)) {
+	New-ItemProperty $NoWithList	NoStaticDefaultVerb
 }
 
 #Appends an underscore '_' to the Registry key for Edge
 $Edge = "HKCR:\AppXd4nrz8ff68srnhf9t5a8sbjyar1cr723_"
-If (Test-Path $Edge) {
+if (Test-Path $Edge) {
 	Set-Item $Edge AppXd4nrz8ff68srnhf9t5a8sbjyar1cr723_
 }
 
@@ -350,7 +362,7 @@ Set-ItemProperty -Path HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Themes\Pe
 
 #
 Write-Host "Disabling OneDrive..."
-If (!(Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\OneDrive")) {
+if (!(Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\OneDrive")) {
 	New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\OneDrive" | Out-Null
 }
 Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\OneDrive" -Name "DisableFileSyncNGSC" -Type DWord -Value 1
@@ -358,7 +370,7 @@ Write-Host "Uninstalling OneDrive..."
 Stop-Process -Name "OneDrive" -ErrorAction SilentlyContinue
 Start-Sleep -s 2
 $onedrive = "$env:SYSTEMROOT\SysWOW64\OneDriveSetup.exe"
-If (!(Test-Path $onedrive)) {
+if (!(Test-Path $onedrive)) {
 	$onedrive = "$env:SYSTEMROOT\System32\OneDriveSetup.exe"
 }
 Start-Process $onedrive "/uninstall" -NoNewWindow -Wait
@@ -369,7 +381,7 @@ Remove-Item -Path "$env:USERPROFILE\OneDrive" -Force -Recurse -ErrorAction Silen
 Remove-Item -Path "$env:LOCALAPPDATA\Microsoft\OneDrive" -Force -Recurse -ErrorAction SilentlyContinue
 Remove-Item -Path "$env:PROGRAMDATA\Microsoft OneDrive" -Force -Recurse -ErrorAction SilentlyContinue
 Remove-Item -Path "$env:SYSTEMDRIVE\OneDriveTemp" -Force -Recurse -ErrorAction SilentlyContinue
-If (!(Test-Path "HKCR:")) {
+if (!(Test-Path "HKCR:")) {
 	New-PSDrive -Name HKCR -PSProvider Registry -Root HKEY_CLASSES_ROOT | Out-Null
 }
 Remove-Item -Path "HKCR:\CLSID\{018D5C66-4533-4307-9B53-224DE2ED1FE6}" -Recurse -ErrorAction SilentlyContinue
@@ -377,7 +389,7 @@ Remove-Item -Path "HKCR:\Wow6432Node\CLSID\{018D5C66-4533-4307-9B53-224DE2ED1FE6
 
 #
 Write-Host "Disabling Windows Update automatic restart..."
-If (!(Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU")) {
+if (!(Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU")) {
 	New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU" -Force | Out-Null
 }
 Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU" -Name "NoAutoRebootWithLoggedOnUsers" -Type DWord -Value 1
@@ -386,20 +398,20 @@ $wshell.Popup("Operation Completed",0,"Done",0x0)
 
 #
 Write-Host "Disabling Cortana..."
-If (!(Test-Path "HKCU:\SOFTWARE\Microsoft\Personalization\Settings")) {
+if (!(Test-Path "HKCU:\SOFTWARE\Microsoft\Personalization\Settings")) {
 	New-Item -Path "HKCU:\SOFTWARE\Microsoft\Personalization\Settings" -Force | Out-Null
 }
 Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Personalization\Settings" -Name "AcceptedPrivacyPolicy" -Type DWord -Value 0
-If (!(Test-Path "HKCU:\SOFTWARE\Microsoft\InputPersonalization")) {
+if (!(Test-Path "HKCU:\SOFTWARE\Microsoft\InputPersonalization")) {
 	New-Item -Path "HKCU:\SOFTWARE\Microsoft\InputPersonalization" -Force | Out-Null
 }
 Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\InputPersonalization" -Name "RestrictImplicitTextCollection" -Type DWord -Value 1
 Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\InputPersonalization" -Name "RestrictImplicitInkCollection" -Type DWord -Value 1
-If (!(Test-Path "HKCU:\SOFTWARE\Microsoft\InputPersonalization\TrainedDataStore")) {
+if (!(Test-Path "HKCU:\SOFTWARE\Microsoft\InputPersonalization\TrainedDataStore")) {
 	New-Item -Path "HKCU:\SOFTWARE\Microsoft\InputPersonalization\TrainedDataStore" -Force | Out-Null
 }
 Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\InputPersonalization\TrainedDataStore" -Name "HarvestContacts" -Type DWord -Value 0
-If (!(Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Search")) {
+if (!(Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Search")) {
 	New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Search" -Force | Out-Null
 }
 Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Search" -Name "AllowCortana" -Type DWord -Value 0
@@ -409,7 +421,7 @@ $wshell.Popup("Operation Completed",0,"Done",0x0)
 Write-Host "Disabling Bing Search in Start Menu..."
 Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Search" -Name "BingSearchEnabled" -Type DWord -Value 0
 Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Search" -Name "CortanaConsent" -Type DWord -Value 0
-If (!(Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Search")) {
+if (!(Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Search")) {
 	New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Search" -Force | Out-Null
 }
 Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Search" -Name "DisableWebSearch" -Type DWord -Value 1
@@ -422,3 +434,7 @@ mkdir "C:\ProgramData\KMSAutoS" -Force | Out-Null
 Start-BitsTransfer -Source "https://download1083.mediafire.com/j0ihypa1h3sg/q246c4lmhyf29ap/KMSAuto+Net.7z" -Destination "C:\ProgramData\KMSAutoS"
 7z x "KMSAuto+Net.7z" -r;
 Start-Process "C:\ProgramData\KMSAutoS\KMSAuto Net.exe"
+
+#
+Write-Host "Activating windows defender"
+Set-MpPreference -DisableRealtimeMonitoring 0
