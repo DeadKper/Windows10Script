@@ -1,9 +1,9 @@
+# Ask if we want to install all apps
+$fullInstall = Read-Host -Prompt 'Do a full install? [y/N]'
+
 # Set execution policy to bypass
 Set-ExecutionPolicy Bypass -Scope Process -Force
 [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072
-
-# Ask if we want to install all apps
-$fullInstall = Read-Host -Prompt 'Do a full install? [y/N]'
 
 # Install chocolatey
 Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
