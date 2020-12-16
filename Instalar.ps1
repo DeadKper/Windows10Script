@@ -1,4 +1,5 @@
 #iex ((New-Object System.Net.WebClient).DownloadString('https://git.io/JLGaJ'))
+#ver 1.0
 
 # Recive parameter elevated
 param([switch]$Elevated)
@@ -60,6 +61,24 @@ foreach ($app in $apps) {
 	choco install $app -y
 }
 
+# Make 7-Zip file associations
+$fileAssiociations = @(
+	".7z"
+	".zip"
+	".rar"
+	".bzip2"
+	".gzip"
+	".tar"
+	".wim"
+	".xz"
+)
+
+foreach ($fileType in $fileAssiociations) {
+	cmd /c assoc $fileType=compressedfile
+}
+
+cmd /c ftype compressedfile=7zFM.exe -File `"C:\Program Files\7-Zip\7zFM.exe`" `"%1`"
+
 #
 Write-Host "Installing Microsoft Office 2016"
 Import-Module BitsTransfer
@@ -68,6 +87,7 @@ Start-BitsTransfer -Source "https://download1077.mediafire.com/wd4d998ujxog/c7vd
 set-alias 7z "$env:ProgramFiles\7-Zip\7z.exe"
 7z x "C:\ProgramData\Office2016x64\Office2016x64.7z" -r;
 C:\ProgramData\Office2016x64\0Auto-SetUp.MSP
+pause
 Remove-Item -R "C:\ProgramData\Office2016x64"
 
 #
