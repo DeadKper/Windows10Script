@@ -1,5 +1,4 @@
 #Set-ExecutionPolicy Bypass -Scope Process -Force;iex ((New-Object System.Net.WebClient).DownloadString('https://git.io/JLGaJ'))
-
 # Ask if we want to install all apps
 $fullInstall = Read-Host -Prompt 'Do a full install? [y/N]'
 
