@@ -1,5 +1,5 @@
 #iex ((New-Object System.Net.WebClient).DownloadString('https://git.io/JLGaJ'))
-#ver 0.2.3
+#ver 0.2.4
 
 # Recive parameter elevated
 param([switch]$Elevated)
@@ -85,7 +85,7 @@ mkdir "C:\ProgramData\Office2016x64" -Force | Out-Null
 Start-BitsTransfer -Source "https://download1584.mediafire.com/884t8rurwmbg/40x4ud60q6uuyrk/Office2016x64.7z" -Destination "C:\ProgramData\Office2016x64\Office2016x64.7z"
 set-alias 7z "$env:ProgramFiles\7-Zip\7z.exe"
 7z x "C:\ProgramData\Office2016x64\Office2016x64.7z" -o"C:\ProgramData\Office2016x64" -r;
-Start-Process C:\ProgramData\Office2016x64\Auto-SetUp.MSP
+Start-Process C:\ProgramData\Office2016x64\Auto_SetUp.MSP
 
 #
 Write-Host "Creating Restore Point incase something bad happens"
