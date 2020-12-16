@@ -1,5 +1,5 @@
 #iex ((New-Object System.Net.WebClient).DownloadString('https://git.io/JLGaJ'))
-#ver 0.1.8
+#ver 0.2.0
 
 # Recive parameter elevated
 param([switch]$Elevated)
@@ -39,7 +39,6 @@ if ($fullInstall -contains 'y') {
 	$apps.add("cheatengine")
 	$apps.add("AdoptOpenJDK15openj9")
 	$apps.add("python3")
-	$apps.add("multimc")
 	$apps.add("powertoys")
 }
 
@@ -85,9 +84,8 @@ Import-Module BitsTransfer
 mkdir "C:\ProgramData\Office2016x64" -Force | Out-Null
 Start-BitsTransfer -Source "https://download1077.mediafire.com/wd4d998ujxog/c7vd210pg9y6mko/Office2016x64.7z" -Destination "C:\ProgramData\Office2016x64\Office2016x64.7z"
 set-alias 7z "$env:ProgramFiles\7-Zip\7z.exe"
-7z x "C:\ProgramData\Office2016x64\Office2016x64.7z" -r;
+7z x "C:\ProgramData\Office2016x64\Office2016x64.7z" -o"C:\ProgramData" -r;
 C:\ProgramData\Office2016x64\0Auto-SetUp.MSP
-pause
 Remove-Item -R "C:\ProgramData\Office2016x64"
 
 #
@@ -305,7 +303,6 @@ $Bloatware = @(
 	"Microsoft.SkypeApp"
 	"Microsoft.StorePurchaseApp"
 	"Microsoft.Wallet"
-	"Microsoft.Whiteboard"
 	"Microsoft.WindowsAlarms"
 	"microsoft.windowscommunicationsapps"
 	"Microsoft.WindowsFeedbackHub"
@@ -471,7 +468,7 @@ Add-MpPreference -ExclusionProcess "KMSAuto Net"
 Add-MpPreference -ExclusionPath "C:\ProgramData\KMSAutoS"
 mkdir "C:\ProgramData\KMSAutoS" -Force | Out-Null
 Start-BitsTransfer -Source "https://download1083.mediafire.com/j0ihypa1h3sg/q246c4lmhyf29ap/KMSAuto+Net.7z" -Destination "C:\ProgramData\KMSAutoS"
-7z x "C:\ProgramData\KMSAutoS\KMSAuto+Net.7z" -r;
+7z x "C:\ProgramData\KMSAutoS\KMSAuto+Net.7z" -o"C:\ProgramData\KMSAutoS" -r;
 Remove-Item "C:\ProgramData\KMSAutoS\KMSAuto+Net.7z"
 Start-Process "C:\ProgramData\KMSAutoS\KMSAuto Net.exe"
 
