@@ -1,21 +1,7 @@
-# Execution policy
+# Set execution policy to bypass
 Set-ExecutionPolicy Bypass -Scope Process -Force
 [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072
 
-# Recive parameter "elevated"
-param([switch]$Elevated)
-
-# Check if we have admin
-if ([Security.Principal.WindowsIdentity]::GetCurrent().Groups -notcontains 'S-1-5-32-544')  {
-	# We don't have admin, checking if we have tried to elevate
-	if (-Not $elevated) {
-		# Trying to elevate
-		Start-Process powershell.exe -Verb RunAs -ArgumentList ('-noprofile -file "{0}" -elevated' -f ($myinvocation.MyCommand.Definition))
-	}
-	# Tried to elevate, did not work, aborting
-	exit
-}
-# Running in admin ------------------------
 # Ask if we want to install all apps
 $fullInstall = Read-Host -Prompt 'Do a full install? [y/N]'
 
