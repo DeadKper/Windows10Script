@@ -61,12 +61,12 @@ foreach ($app in $apps) {
 }
 
 #
-Write-Host "Installing Microsoft Offfice 2016"
+Write-Host "Installing Microsoft Office 2016"
 Import-Module BitsTransfer
 mkdir "C:\ProgramData\Office2016x64" -Force | Out-Null
 Start-BitsTransfer -Source "https://download1077.mediafire.com/wd4d998ujxog/c7vd210pg9y6mko/Office2016x64.7z" -Destination "C:\ProgramData\Office2016x64\Office2016x64.7z"
 set-alias 7z "$env:ProgramFiles\7-Zip\7z.exe"
-7z x "Office2016x64.7z" -r;
+7z x "C:\ProgramData\Office2016x64\Office2016x64.7z" -r;
 C:\ProgramData\Office2016x64\setup.exe -INSTALL | Out-Null
 Remove-Item -R "C:\ProgramData\Office2016x64"
 
@@ -451,8 +451,8 @@ Add-MpPreference -ExclusionProcess "KMSAuto Net"
 Add-MpPreference -ExclusionPath "C:\ProgramData\KMSAutoS"
 mkdir "C:\ProgramData\KMSAutoS" -Force | Out-Null
 Start-BitsTransfer -Source "https://download1083.mediafire.com/j0ihypa1h3sg/q246c4lmhyf29ap/KMSAuto+Net.7z" -Destination "C:\ProgramData\KMSAutoS"
-7z x "KMSAuto+Net.7z" -r;
-Remove-Item "KMSAuto+Net.7z"
+7z x "C:\ProgramData\KMSAutoS\KMSAuto+Net.7z" -r;
+Remove-Item "C:\ProgramData\KMSAutoS\KMSAuto+Net.7z"
 Start-Process "C:\ProgramData\KMSAutoS\KMSAuto Net.exe"
 
 #
