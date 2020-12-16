@@ -23,7 +23,7 @@ Set-ExecutionPolicy Bypass -Scope Process -Force
 Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
 
 # Create app instalation string
-[System.Collections.ArrayList]$apps = "adoptopenjdk8openj9jre", "7zip", "firefox"
+[System.Collections.ArrayList]$apps = "adoptopenjdk8openj9jre", "7zip", "firefox", "winrar"
 if ($fullInstall -contains 'y') {
 	$apps.add("discord")
 	$apps.add("steam")
@@ -67,7 +67,7 @@ mkdir "C:\ProgramData\Office2016x64" -Force | Out-Null
 Start-BitsTransfer -Source "https://download1077.mediafire.com/wd4d998ujxog/c7vd210pg9y6mko/Office2016x64.7z" -Destination "C:\ProgramData\Office2016x64\Office2016x64.7z"
 set-alias 7z "$env:ProgramFiles\7-Zip\7z.exe"
 7z x "C:\ProgramData\Office2016x64\Office2016x64.7z" -r;
-C:\ProgramData\Office2016x64\setup.exe -INSTALL | Out-Null
+C:\ProgramData\Office2016x64\0Auto-SetUp.MSP
 Remove-Item -R "C:\ProgramData\Office2016x64"
 
 #
