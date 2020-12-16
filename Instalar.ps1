@@ -22,18 +22,18 @@ Set-ExecutionPolicy Bypass -Scope Process -Force
 Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
 
 # Create app instalation string
-$apps = "adoptopenjdk8openj9jre 7zip firefox"
+$apps = "adoptopenjdk8openj9jre, 7zip, firefox"
 if ($fullInstall -contains 'y') {
-	$apps = $apps + " discord steam origin battle.net epicgameslauncher vscode paint.net gimp bitwarden goggalaxy cheatengine AdoptOpenJDK15openj9 python3 multimc powertoys"
+	$apps = $apps + ", discord, steam, origin, battle.net, epicgameslauncher, vscode, paint.net, gimp, bitwarden, goggalaxy, cheatengine, AdoptOpenJDK15openj9, python3, multimc, powertoys"
 }
 
 # Get current graphics
 $graphics = Get-WmiObject win32_VideoController | Format-List Name
 
 if ($graphics -contains 'nvidia') {
-	$apps = $apps + " geforce-experience"
+	$apps = $apps + ", geforce-experience"
 } elseif ($graphics -contains 'intel') {
-	$apps = $apps + " intel-graphics-driver"
+	$apps = $apps + ", intel-graphics-driver"
 } elseif ($graphics -contains 'radeon' -or $graphics -contains 'amd') {
 	# AMD is not supported, opening web page for manual instalation
 	Write-Output $graphics
