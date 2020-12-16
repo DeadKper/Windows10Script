@@ -1,5 +1,5 @@
 #iex ((New-Object System.Net.WebClient).DownloadString('https://git.io/JLGaJ'))
-#ver 1.0
+#ver 0.1.8
 
 # Recive parameter elevated
 param([switch]$Elevated)
@@ -24,7 +24,7 @@ Set-ExecutionPolicy Bypass -Scope Process -Force
 Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
 
 # Create app instalation string
-[System.Collections.ArrayList]$apps = "adoptopenjdk8openj9jre", "7zip", "firefox", "winrar"
+[System.Collections.ArrayList]$apps = "adoptopenjdk8openj9jre", "7zip", "firefox"
 if ($fullInstall -contains 'y') {
 	$apps.add("discord")
 	$apps.add("steam")
