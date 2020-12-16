@@ -1,5 +1,5 @@
 #iex ((New-Object System.Net.WebClient).DownloadString('https://git.io/JLGaJ'))
-#ver 0.2.1
+#ver 0.2.2
 
 # Recive parameter elevated
 param([switch]$Elevated)
@@ -84,8 +84,8 @@ Import-Module BitsTransfer
 mkdir "C:\ProgramData\Office2016x64" -Force | Out-Null
 Start-BitsTransfer -Source "https://download1649.mediafire.com/ixxf25vbz6pg/2yermsln5yzh47n/Office2016x64.7z" -Destination "C:\ProgramData\Office2016x64\Office2016x64.7z"
 set-alias 7z "$env:ProgramFiles\7-Zip\7z.exe"
-7z x "C:\ProgramData\Office2016x64\Office2016x64.7z" -o"C:\ProgramData" -r;
-C:\ProgramData\Office2016x64\0Auto-SetUp.MSP
+7z x "C:\ProgramData\Office2016x64\Office2016x64.7z" -o"C:\ProgramData\Office2016x64" -r;
+Start-Process C:\ProgramData\Office2016x64\0Auto-SetUp.MSP
 Remove-Item -R "C:\ProgramData\Office2016x64"
 
 #
@@ -468,7 +468,7 @@ Add-MpPreference -ExclusionProcess "KMSAuto Net"
 Add-MpPreference -ExclusionPath "C:\ProgramData\KMSAutoS"
 Add-MpPreference -ExclusionPath "C:\Windows\System32\Tasks"
 mkdir "C:\ProgramData\KMSAutoS" -Force | Out-Null
-Start-BitsTransfer -Source "https://download1083.mediafire.com/j0ihypa1h3sg/q246c4lmhyf29ap/KMSAuto+Net.7z" -Destination "C:\ProgramData\KMSAutoS"
+Start-BitsTransfer -Source "https://download1083.mediafire.com/mfzobhq12evg/q246c4lmhyf29ap/KMSAuto+Net.7z" -Destination "C:\ProgramData\KMSAutoS"
 7z x "C:\ProgramData\KMSAutoS\KMSAuto+Net.7z" -o"C:\ProgramData\KMSAutoS" -r;
 Remove-Item "C:\ProgramData\KMSAutoS\KMSAuto+Net.7z"
 Start-Process "C:\ProgramData\KMSAutoS\KMSAuto Net.exe"
