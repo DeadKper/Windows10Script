@@ -23,18 +23,32 @@ Set-ExecutionPolicy Bypass -Scope Process -Force
 Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
 
 # Create app instalation string
-$apps = "adoptopenjdk8openj9jre, 7zip, firefox"
+[System.Collections.ArrayList]$apps = "adoptopenjdk8openj9jre", "7zip", "firefox"
 if ($fullInstall -contains 'y') {
-	$apps = $apps + ", discord, steam, origin, battle.net, epicgameslauncher, vscode, paint.net, gimp, bitwarden, goggalaxy, cheatengine, AdoptOpenJDK15openj9, python3, multimc, powertoys"
+	$apps.add("discord")
+	$apps.add("steam")
+	$apps.add("origin")
+	$apps.add("battle.net")
+	$apps.add("epicgameslauncher")
+	$apps.add("vscode")
+	$apps.add("paint.net")
+	$apps.add("gimp")
+	$apps.add("bitwarden")
+	$apps.add("goggalaxy")
+	$apps.add("cheatengine")
+	$apps.add("AdoptOpenJDK15openj9")
+	$apps.add("python3")
+	$apps.add("multimc")
+	$apps.add("powertoys")
 }
 
 # Get current graphics
 $graphics = Get-WmiObject win32_VideoController | Format-List Name
 
 if ($graphics -contains 'nvidia') {
-	$apps = $apps + ", geforce-experience"
+	$apps.add("geforce-experience")
 } elseif ($graphics -contains 'intel') {
-	$apps = $apps + ", intel-graphics-driver"
+	$apps.add("intel-graphics-driver")
 } elseif ($graphics -contains 'radeon' -or $graphics -contains 'amd') {
 	# AMD is not supported, opening web page for manual instalation
 	Write-Output $graphics
@@ -42,7 +56,9 @@ if ($graphics -contains 'nvidia') {
 }
 
 # Install choco apps
-choco install $apps -y
+foreach ($app in $apps) {
+	choco install $app -y
+}
 
 #
 Write-Host "Installing Microsoft Offfice 2016"
