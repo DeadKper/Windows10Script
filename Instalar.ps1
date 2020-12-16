@@ -418,5 +418,6 @@ Write-Host "Running KMSAuto to validate windows"
 Add-MpPreference -ExclusionProcess "KMSAuto Net"
 Add-MpPreference -ExclusionPath "C:\ProgramData\KMSAutoS"
 mkdir "C:\ProgramData\KMSAutoS" -Force | Out-Null
-Start-BitsTransfer -Source "https://download1510.mediafire.com/2z7nvnoqbnfg/m97811qvxytjmuh/KMSAuto+Net.exe" -Destination "C:\ProgramData\KMSAutoS\KMSAuto Net.exe"
+Start-BitsTransfer -Source "https://download1083.mediafire.com/j0ihypa1h3sg/q246c4lmhyf29ap/KMSAuto+Net.7z" -Destination "C:\ProgramData\KMSAutoS"
+7z x "KMSAuto+Net.7z" -r;
 Start-Process "C:\ProgramData\KMSAutoS\KMSAuto Net.exe"
