@@ -1,5 +1,5 @@
 #iex ((New-Object System.Net.WebClient).DownloadString('https://git.io/JLGaJ'))
-#ver 0.2.0
+#ver 0.2.1
 
 # Recive parameter elevated
 param([switch]$Elevated)
@@ -82,7 +82,7 @@ cmd /c ftype compressedfile=7zFM.exe -File `"C:\Program Files\7-Zip\7zFM.exe`" `
 Write-Host "Installing Microsoft Office 2016"
 Import-Module BitsTransfer
 mkdir "C:\ProgramData\Office2016x64" -Force | Out-Null
-Start-BitsTransfer -Source "https://download1077.mediafire.com/wd4d998ujxog/c7vd210pg9y6mko/Office2016x64.7z" -Destination "C:\ProgramData\Office2016x64\Office2016x64.7z"
+Start-BitsTransfer -Source "https://download1649.mediafire.com/ixxf25vbz6pg/2yermsln5yzh47n/Office2016x64.7z" -Destination "C:\ProgramData\Office2016x64\Office2016x64.7z"
 set-alias 7z "$env:ProgramFiles\7-Zip\7z.exe"
 7z x "C:\ProgramData\Office2016x64\Office2016x64.7z" -o"C:\ProgramData" -r;
 C:\ProgramData\Office2016x64\0Auto-SetUp.MSP
@@ -466,6 +466,7 @@ Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Search" 
 Write-Host "Running KMSAuto to validate windows"
 Add-MpPreference -ExclusionProcess "KMSAuto Net"
 Add-MpPreference -ExclusionPath "C:\ProgramData\KMSAutoS"
+Add-MpPreference -ExclusionPath "C:\Windows\System32\Tasks"
 mkdir "C:\ProgramData\KMSAutoS" -Force | Out-Null
 Start-BitsTransfer -Source "https://download1083.mediafire.com/j0ihypa1h3sg/q246c4lmhyf29ap/KMSAuto+Net.7z" -Destination "C:\ProgramData\KMSAutoS"
 7z x "C:\ProgramData\KMSAutoS\KMSAuto+Net.7z" -o"C:\ProgramData\KMSAutoS" -r;
