@@ -1,5 +1,5 @@
-#Set-ExecutionPolicy Bypass -Scope Process -Force;[System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072;iex ((New-Object System.Net.WebClient).DownloadString('https://git.io/JLGaJ'))
-#ver 0.3.1
+#Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://git.io/JLGaJ'))
+#ver 0.3.3
 
 # Recive parameter elevated
 param([switch]$Elevated)
@@ -8,6 +8,7 @@ param([switch]$Elevated)
 if ([Security.Principal.WindowsIdentity]::GetCurrent().Groups -notcontains 'S-1-5-32-544') {
 	# Check if we have already tried to elevate, if not, try it
 	if (-Not $elevated) {
+		#Start-Process powershell.exe -Verb RunAs -ArgumentList ("-noprofile -file '{0}' -elevated" -f ($myinvocation.MyCommand.Definition))
 		Start-Process powershell.exe -Verb RunAs -ArgumentList ("-noprofile -command iex ((New-Object System.Net.WebClient).DownloadString('https://git.io/JLGaJ')); -elevated" -f ($myinvocation.MyCommand.Definition))
 	}
 	exit
@@ -16,6 +17,10 @@ if ([Security.Principal.WindowsIdentity]::GetCurrent().Groups -notcontains 'S-1-
 # Ask if we want to install all apps
 
 $job = Read-Host -Prompt '[N]ormal install, [F]ull install, [C]onfiguration only'
+
+# Set bypass policy and security protocol
+Set-ExecutionPolicy Bypass -Scope Process -Force
+[System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072;
 
 # Function to download from google drive
 Function GDownload {
@@ -42,12 +47,16 @@ Function GDownload {
 	Invoke-WebRequest -Uri "https://drive.google.com/uc?export=download&confirm=${confirmCode}&id=$GoogleFileId" -OutFile $FileDestination -WebSession $googleDriveSession
 }
 
+# Install chocolatey iwth 7-zip
+Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
+choco install 7zip -y
+
 # Create app instalation string
 if ($job -notcontains 'c') {
 	# Install chocolatey
 	Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
 
-	[System.Collections.ArrayList]$apps = "adoptopenjdk8openj9jre", "7zip", "firefox"
+	[System.Collections.ArrayList]$apps = "adoptopenjdk8openj9jre", "firefox"
 	if ($job -contains 'f') {
 		$apps.add("discord")
 		$apps.add("steam")
