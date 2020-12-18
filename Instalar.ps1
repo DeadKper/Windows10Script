@@ -1,5 +1,5 @@
-#iex ((New-Object System.Net.WebClient).DownloadString('https://git.io/JLGaJ'))
-#ver 0.3.0
+#Set-ExecutionPolicy Bypass -Scope Process -Force;[System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072;iex ((New-Object System.Net.WebClient).DownloadString('https://git.io/JLGaJ'))
+#ver 0.3.1
 
 # Recive parameter elevated
 param([switch]$Elevated)
@@ -16,13 +16,6 @@ if ([Security.Principal.WindowsIdentity]::GetCurrent().Groups -notcontains 'S-1-
 # Ask if we want to install all apps
 
 $job = Read-Host -Prompt '[N]ormal install, [F]ull install, [C]onfiguration only'
-
-# Set execution policy to bypass
-Set-ExecutionPolicy Bypass -Scope Process -Force
-[System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072
-
-# Install chocolatey
-Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
 
 # Function to download from google drive
 Function GDownload {
@@ -51,6 +44,9 @@ Function GDownload {
 
 # Create app instalation string
 if ($job -notcontains 'c') {
+	# Install chocolatey
+	Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
+
 	[System.Collections.ArrayList]$apps = "adoptopenjdk8openj9jre", "7zip", "firefox"
 	if ($job -contains 'f') {
 		$apps.add("discord")
