@@ -1,5 +1,5 @@
 #iex ((New-Object System.Net.WebClient).DownloadString('https://git.io/JLGaJ'))
-#ver 0.2.5
+#ver 0.3.0
 
 # Recive parameter elevated
 param([switch]$Elevated)
@@ -14,7 +14,8 @@ if ([Security.Principal.WindowsIdentity]::GetCurrent().Groups -notcontains 'S-1-
 }
 # Running in admin
 # Ask if we want to install all apps
-$fullInstall = Read-Host -Prompt 'Do a full install? [y/N]'
+
+$job = Read-Host -Prompt '[N]ormal install, [F]ull install, [C]onfiguration only'
 
 # Set execution policy to bypass
 Set-ExecutionPolicy Bypass -Scope Process -Force
@@ -23,66 +24,88 @@ Set-ExecutionPolicy Bypass -Scope Process -Force
 # Install chocolatey
 Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
 
+# Function to download from google drive
+Function GDownload {
+	param(
+		[string]$GoogleFileId,
+		[string]$FileDestination
+	)
+
+	# Set protocol to tls version 1.2
+	[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+
+	# Download the Virus Warning into _tmp.txt
+	Invoke-WebRequest -Uri "https://drive.google.com/uc?export=download&id=$GoogleFileId" -OutFile "_tmp.txt" -SessionVariable googleDriveSession
+
+	# Get confirmation code from _tmp.txt
+	$searchString = Select-String -Path "_tmp.txt" -Pattern "confirm="
+	$searchString -match "confirm=(?<content>.*)&amp;id="
+	$confirmCode = $matches['content']
+
+	# Delete _tmp.txt
+	Remove-Item "_tmp.txt"
+
+	# Download the real file
+	Invoke-WebRequest -Uri "https://drive.google.com/uc?export=download&confirm=${confirmCode}&id=$GoogleFileId" -OutFile $FileDestination -WebSession $googleDriveSession
+}
+
 # Create app instalation string
-[System.Collections.ArrayList]$apps = "adoptopenjdk8openj9jre", "7zip", "firefox"
-if ($fullInstall -contains 'y') {
-	$apps.add("discord")
-	$apps.add("steam")
-	$apps.add("origin")
-	$apps.add("battle.net")
-	$apps.add("epicgameslauncher")
-	$apps.add("vscode")
-	$apps.add("paint.net")
-	$apps.add("gimp")
-	$apps.add("bitwarden")
-	$apps.add("goggalaxy")
-	$apps.add("cheatengine")
-	$apps.add("AdoptOpenJDK15openj9")
-	$apps.add("python3")
-	$apps.add("powertoys")
+if ($job -notcontains 'c') {
+	[System.Collections.ArrayList]$apps = "adoptopenjdk8openj9jre", "7zip", "firefox"
+	if ($job -contains 'f') {
+		$apps.add("discord")
+		$apps.add("steam")
+		$apps.add("origin")
+		$apps.add("battle.net")
+		$apps.add("epicgameslauncher")
+		$apps.add("vscode")
+		$apps.add("paint.net")
+		$apps.add("gimp")
+		$apps.add("bitwarden")
+		$apps.add("goggalaxy")
+		$apps.add("cheatengine")
+		$apps.add("AdoptOpenJDK15openj9")
+		$apps.add("python3")
+		$apps.add("powertoys")
+	}
+
+	# Get current graphics
+	$graphics = Get-WmiObject win32_VideoController | Format-List Name
+
+	if ($graphics -contains 'nvidia') {
+		$apps.add("geforce-experience")
+	} elseif ($graphics -contains 'intel') {
+		$apps.add("intel-graphics-driver")
+	} elseif ($graphics -contains 'radeon' -or $graphics -contains 'amd') {
+		# AMD is not supported, opening web page for manual instalation
+		Write-Output $graphics
+		Start-Process https://www.amd.com/en/support
+	} else {
+		$graphics = Read-Host -Prompt 'Insert graphics to install: [I]ntel, [N]vidia, [A]md/[R]adeon'
+		if ($graphics -contains 'n') {
+			$apps.add("geforce-experience")
+		} elseif ($graphics -contains 'i') {
+			$apps.add("intel-graphics-driver")
+		} elseif ($graphics -contains 'r' -or $graphics -contains 'a') {
+			# AMD is not supported, opening web page for manual instalation
+			Write-Output $graphics
+			Start-Process https://www.amd.com/en/support
+		}
+	}
+
+	# Install choco apps
+	foreach ($app in $apps) {
+		choco install $app -y
+	}
+
+	# Open 7-Zip to do a manual file association
+	Start-Process "$env:ProgramFiles\7-Zip\7zFM.exe"
 }
-
-# Get current graphics
-$graphics = Get-WmiObject win32_VideoController | Format-List Name
-
-if ($graphics -contains 'nvidia') {
-	$apps.add("geforce-experience")
-} elseif ($graphics -contains 'intel') {
-	$apps.add("intel-graphics-driver")
-} elseif ($graphics -contains 'radeon' -or $graphics -contains 'amd') {
-	# AMD is not supported, opening web page for manual instalation
-	Write-Output $graphics
-	Start-Process https://www.amd.com/en/support
-}
-
-# Install choco apps
-foreach ($app in $apps) {
-	choco install $app -y
-}
-
-#Open 7-Zip to do a manual file association
-Start-Process "$env:ProgramFiles\7-Zip\7zFM.exe"
-
-#
-Write-Host "Installing Microsoft Office 2016"
-Import-Module BitsTransfer
-mkdir "C:\ProgramData\Office2016x64" -Force | Out-Null
-Start-BitsTransfer -Source "https://download1584.mediafire.com/884t8rurwmbg/40x4ud60q6uuyrk/Office2016x64.7z" -Destination "C:\ProgramData\Office2016x64\Office2016x64.7z"
-set-alias 7z "$env:ProgramFiles\7-Zip\7z.exe"
-7z x "C:\ProgramData\Office2016x64\Office2016x64.7z" -o"C:\ProgramData\Office2016x64" -r;
-Start-Process C:\ProgramData\Office2016x64\Auto_SetUp.MSP
 
 #
 Write-Host "Creating Restore Point incase something bad happens"
 Enable-ComputerRestore -Drive "C:\"
-Checkpoint-Computer -Description "RestorePoint1" -RestorePointType "MODifY_SETTINGS"
-
-#
-Write-Host "Running O&O Shutup with Recommended Settings"
-mkdir "C:\ProgramData\OandO" -Force | Out-Null
-Start-BitsTransfer -Source "https://raw.githubusercontent.com/ChrisTitusTech/win10script/master/ooshutup10.cfg" -Destination "C:\ProgramData\OandO\ooshutup10.cfg"
-Start-BitsTransfer -Source "https://dl5.oo-software.com/files/ooshutup10/OOSU10.exe" -Destination "C:\ProgramData\OandO\OOSU10.exe"
-C:\ProgramData\OandO\OOSU10.exe ooshutup10.cfg /quiet
+Checkpoint-Computer -Description "RestorePoint1" -RestorePointType "MODIFY_SETTINGS"
 
 #
 Write-Host "Disable bandwith windows limit"
@@ -263,7 +286,6 @@ Remove-Item -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\MyCo
 
 # Bloatware array
 $Bloatware = @(
-
 	#Unnecessary Windows 10 AppX Apps
 	"Microsoft.3DBuilder"
 	"Microsoft.AppConnector"
@@ -341,8 +363,8 @@ foreach ($Bloat in $Bloatware) {
 }
 
 #
-Write-Host "Installing Windows Media Player..."
-Enable-WindowsOptionalFeature -Online -FeatureName "WindowsMediaPlayer" -NoRestart -WarningAction SilentlyContinue | Out-Null
+#Write-Host "Installing Windows Media Player..."
+#Enable-WindowsOptionalFeature -Online -FeatureName "WindowsMediaPlayer" -NoRestart -WarningAction SilentlyContinue | Out-Null
 
 #
 Write-Host "Stopping Edge from taking over as the default .PDF viewer"
@@ -384,6 +406,8 @@ if (!(Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\OneDrive")) {
 	New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\OneDrive" | Out-Null
 }
 Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\OneDrive" -Name "DisableFileSyncNGSC" -Type DWord -Value 1
+
+#
 Write-Host "Uninstalling OneDrive..."
 Stop-Process -Name "OneDrive" -ErrorAction SilentlyContinue
 Start-Sleep -s 2
@@ -446,21 +470,42 @@ Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Search
 Write-Host "Hiding Taskbar Search icon / box..."
 Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Search" -Name "SearchboxTaskbarMode" -Type DWord -Value 0
 
+Set-Alias 7z "$env:ProgramFiles\7-Zip\7z.exe"
+if ($job -notcontains 'c') {
+	Write-Host "Downloading additional files"
+	$fileId="1OD5cvYwypj2xs0W87yt_eO-N6ltS6nQo"
+	$fileName="C:\ProgramData\Files.7z"
+	GDownload $fileId $fileName
+
+	#
+	Write-Host "Extracting files and deleting temp files"
+	7z x $fileName -o"C:\ProgramData" -r
+	Remove-Item $fileName
+
+	#
+	Write-Host "Installing Microsoft Office 2016"
+	Start-Process C:\ProgramData\Office\setup.exe
+
+	#
+	Write-Host "Running KMSAuto to validate windows"
+	Add-MpPreference -ExclusionProcess "KMSAuto Net"
+	Add-MpPreference -ExclusionPath "C:\ProgramData\KMSAutoS"
+	Add-MpPreference -ExclusionPath "C:\Windows\System32\Tasks"
+	Start-Process "C:\ProgramData\KMSAutoS\KMSAuto Net.exe"
+} else {
+	#
+	Write-Host "Downloading and running O&O Shutup with recommended Settings"
+	$fileId="1X4_Y4sER4Zf5zIWd-GUAVus34bqZe0EQ"
+	$fileName="C:\ProgramData\OOSU.7z"
+	Invoke-WebRequest -Uri "https://drive.google.com/uc?export=download&id=$fileId" -OutFile $fileName
+	7z x $fileName -o"C:\ProgramData" -r
+	Remove-Item $fileName
+}
+
 #
-Write-Host "Running KMSAuto to validate windows"
-Add-MpPreference -ExclusionProcess "KMSAuto Net"
-Add-MpPreference -ExclusionPath "C:\ProgramData\KMSAutoS"
-Add-MpPreference -ExclusionPath "C:\Windows\System32\Tasks"
-mkdir "C:\ProgramData\KMSAutoS" -Force | Out-Null
-Start-BitsTransfer -Source "https://download1083.mediafire.com/mfzobhq12evg/q246c4lmhyf29ap/KMSAuto+Net.7z" -Destination "C:\ProgramData\KMSAutoS"
-7z x "C:\ProgramData\KMSAutoS\KMSAuto+Net.7z" -o"C:\ProgramData\KMSAutoS" -r;
-Remove-Item "C:\ProgramData\KMSAutoS\KMSAuto+Net.7z"
-Start-Process "C:\ProgramData\KMSAutoS\KMSAuto Net.exe"
+Write-Host "Running O & O Shutup with Recommended Settings"
+C:\ProgramData\OOSU\OOSU10.exe C:\ProgramData\OOSU\ooshutup10.cfg /quiet
 
 #
 Write-Host "Activating windows defender"
 Set-MpPreference -DisableRealtimeMonitoring 0
-
-Write-Host "Continue when office is installed and windows is activated"
-pause
-Remove-Item -R "C:\ProgramData\Office2016x64"
