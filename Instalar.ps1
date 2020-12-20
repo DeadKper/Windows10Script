@@ -1,5 +1,5 @@
 #Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://git.io/JLGaJ'))
-#ver 0.3.3
+#ver 0.2.8
 
 # Recive parameter elevated
 param([switch]$Elevated)
@@ -47,7 +47,7 @@ Function GDownload {
 	Invoke-WebRequest -Uri "https://drive.google.com/uc?export=download&confirm=${confirmCode}&id=$GoogleFileId" -OutFile $FileDestination -WebSession $googleDriveSession
 }
 
-# Install chocolatey iwth 7-zip
+# Install chocolatey with 7-zip
 Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
 choco install 7zip -y
 
@@ -111,6 +111,11 @@ if ($job -notcontains 'c') {
 Write-Host "Creating Restore Point incase something bad happens"
 Enable-ComputerRestore -Drive "C:\"
 Checkpoint-Computer -Description "RestorePoint1" -RestorePointType "MODIFY_SETTINGS"
+
+# Add all registry
+New-PSDrive -PSProvider Registry -Name HKU -Root HKEY_USERS
+New-PSDrive -PSProvider Registry -Name HKCC -Root HKEY_CURRENT_CONFIG
+New-PSDrive -PSProvider Registry -Name HKCR -Root HKEY_CLASSES_ROOT
 
 #
 Write-Host "Disable bandwith windows limit"
