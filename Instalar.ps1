@@ -1,5 +1,5 @@
 #Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://git.io/JLGaJ'))
-#ver 0.2.8
+#ver 0.3.0
 
 # Recive parameter elevated
 param([switch]$Elevated)
@@ -22,34 +22,26 @@ $job = Read-Host -Prompt '[N]ormal install, [F]ull install, [C]onfiguration only
 Set-ExecutionPolicy Bypass -Scope Process -Force
 [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072;
 
-# Function to download from google drive
-Function GDownload {
-	param(
-		[string]$GoogleFileId,
-		[string]$FileDestination
-	)
-
-	# Set protocol to tls version 1.2
-	[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-
-	# Download the Virus Warning into _tmp.txt
-	Invoke-WebRequest -Uri "https://drive.google.com/uc?export=download&id=$GoogleFileId" -OutFile "_tmp.txt" -SessionVariable googleDriveSession
-
-	# Get confirmation code from _tmp.txt
-	$searchString = Select-String -Path "_tmp.txt" -Pattern "confirm="
-	$searchString -match "confirm=(?<content>.*)&amp;id="
-	$confirmCode = $matches['content']
-
-	# Delete _tmp.txt
-	Remove-Item "_tmp.txt"
-
-	# Download the real file
-	Invoke-WebRequest -Uri "https://drive.google.com/uc?export=download&confirm=${confirmCode}&id=$GoogleFileId" -OutFile $FileDestination -WebSession $googleDriveSession
+# Remove wget alias
+while (Test-Path Alias:wget) {
+	Remove-Item Alias:wget
 }
 
 # Install chocolatey with 7-zip
-Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
-choco install 7zip -y
+if (-not (Test-Path "$env:ProgramData\chocolatey\choco.exe")) {
+	Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
+}
+if (-not (Test-Path "$env:ProgramFiles\7-Zip\7z.exe")) {
+	choco install 7zip -y
+}
+if (-not (Test-Path "$env:ProgramData\chocolatey\bin\wget.exe")) {
+	choco install wget -y
+}
+if (-not (Test-Path "$env:ProgramData\chocolatey\bin\sed.exe")) {
+	choco install sed -y
+}
+
+Set-Alias 7z "$env:ProgramFiles\7-Zip\7z.exe"
 
 # Create app instalation string
 if ($job -notcontains 'c') {
@@ -105,6 +97,31 @@ if ($job -notcontains 'c') {
 
 	# Open 7-Zip to do a manual file association
 	Start-Process "$env:ProgramFiles\7-Zip\7zFM.exe"
+}
+
+# Function to download from google drive
+Function GDownload {
+	param(
+		[string]$googleFileId,
+		[string]$fileDestination,
+		[bool]$useCookies
+	)
+	if (-not $useCookies) {
+		wget -O $fileDestination "https://docs.google.com/uc?export=download&id=$googleFileId"
+		return
+	}
+	# Define path to temporal cookies
+	$cookiesTxt="$env:ProgramData\cookies.txt"
+	$cookiesConfirmTxt="$env:ProgramData\confirm.txt"
+	# Save cookies and the confirm string for the download
+	wget --save-cookies $cookiesTxt "https://docs.google.com/uc?export=download&id=$googleFileId" -O- | sed -rn 's/.*confirm=([0-9A-Za-z_]+).*/\1/p' > $cookiesConfirmTxt
+	# Get the confirm string to download the file
+	$confirm = Get-Content -Path $cookiesConfirmTxt
+	# Download file using temporal cookies and the confirm string
+	wget --load-cookies $cookiesTxt -O $fileDestination "https://docs.google.com/uc?export=download&id=$googleFileId&confirm=$confirm"
+	# Remove cookies
+	Remove-Item $cookiesTxt
+	Remove-Item $cookiesConfirmTxt
 }
 
 #
@@ -373,10 +390,6 @@ foreach ($Bloat in $Bloatware) {
 }
 
 #
-#Write-Host "Installing Windows Media Player..."
-#Enable-WindowsOptionalFeature -Online -FeatureName "WindowsMediaPlayer" -NoRestart -WarningAction SilentlyContinue | Out-Null
-
-#
 Write-Host "Stopping Edge from taking over as the default .PDF viewer"
 $NoPDF = "HKCR:\.pdf"
 $NoProgids = "HKCR:\.pdf\OpenWithProgids"
@@ -408,7 +421,7 @@ if (Test-Path $Edge) {
 
 #
 Write-Host "Enabling Dark Mode"
-Set-ItemProperty -Path HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Themes\Personalize -Name AppsUseLightTheme -Value 0
+Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Themes\Personalize" -Name "AppsUseLightTheme" -Value 0
 
 #
 Write-Host "Disabling OneDrive..."
@@ -477,44 +490,46 @@ if (!(Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Search")) {
 	New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Search" -Force | Out-Null
 }
 Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Search" -Name "DisableWebSearch" -Type DWord -Value 1
+
+#
 Write-Host "Hiding Taskbar Search icon / box..."
 Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Search" -Name "SearchboxTaskbarMode" -Type DWord -Value 0
 
-Set-Alias 7z "$env:ProgramFiles\7-Zip\7z.exe"
 if ($job -notcontains 'c') {
+	#
+	$fileName="$env:ProgramData\Files.7z"
 	Write-Host "Downloading additional files"
-	$fileId="1OD5cvYwypj2xs0W87yt_eO-N6ltS6nQo"
-	$fileName="C:\ProgramData\Files.7z"
-	GDownload $fileId $fileName
+	GDownload "1OD5cvYwypj2xs0W87yt_eO-N6ltS6nQo" $fileName $True
 
 	#
 	Write-Host "Extracting files and deleting temp files"
-	7z x $fileName -o"C:\ProgramData" -r
+	7z x $fileName -o"$env:ProgramData" -r
 	Remove-Item $fileName
 
 	#
 	Write-Host "Installing Microsoft Office 2016"
-	Start-Process C:\ProgramData\Office\setup.exe
+	Start-Process '$env:ProgramData\Office\setup.exe'
 
 	#
 	Write-Host "Running KMSAuto to validate windows"
 	Add-MpPreference -ExclusionProcess "KMSAuto Net"
-	Add-MpPreference -ExclusionPath "C:\ProgramData\KMSAutoS"
+	Add-MpPreference -ExclusionPath "$env:ProgramData\KMSAutoS"
+	Add-MpPreference -ExclusionPath "$env:ProgramData\KMSAutoS\KMSAuto Net.exe"
 	Add-MpPreference -ExclusionPath "C:\Windows\System32\Tasks"
-	Start-Process "C:\ProgramData\KMSAutoS\KMSAuto Net.exe"
+	Start-Process '$env:ProgramData\KMSAutoS\KMSAuto Net.exe'
 } else {
 	#
-	Write-Host "Downloading and running O&O Shutup with recommended Settings"
-	$fileId="1X4_Y4sER4Zf5zIWd-GUAVus34bqZe0EQ"
-	$fileName="C:\ProgramData\OOSU.7z"
-	Invoke-WebRequest -Uri "https://drive.google.com/uc?export=download&id=$fileId" -OutFile $fileName
-	7z x $fileName -o"C:\ProgramData" -r
+	$fileName="$env:ProgramData\OOSU.7z"
+	Write-Host "Downloading O&O Shutup"
+	GDownload "1X4_Y4sER4Zf5zIWd-GUAVus34bqZe0EQ" $fileName $False
+	7z x $fileName -o"$env:ProgramData" -r
 	Remove-Item $fileName
 }
 
 #
 Write-Host "Running O & O Shutup with Recommended Settings"
-C:\ProgramData\OOSU\OOSU10.exe C:\ProgramData\OOSU\ooshutup10.cfg /quiet
+Set-Alias OOSU "$env:ProgramData\OOSU\OOSU10.exe"
+OOSU $env:ProgramData\OOSU\ooshutup10.cfg /quiet
 
 #
 Write-Host "Activating windows defender"
