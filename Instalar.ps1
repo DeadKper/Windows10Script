@@ -1,5 +1,7 @@
-#Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://git.io/JLGaJ'))
-#ver 0.3.1
+#Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://raw.githubusercontent.com/DeadKper/Windows10Script/main/Instalar.ps1?token=AINZBETP3VJ6LYLMBQBU2BK73HH26'))
+
+#https://git.io/JLGaJ
+#ver 0.3.2
 
 # Recive parameter elevated
 param([switch]$elevated)
@@ -8,7 +10,7 @@ param([switch]$elevated)
 if ([Security.Principal.WindowsIdentity]::GetCurrent().Groups -notcontains 'S-1-5-32-544') {
 	# Check if we have already tried to elevate, if not, try it
 	if (-Not $elevated) {
-		Start-Process powershell.exe -Verb RunAs -ArgumentList ("-noprofile -command Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://git.io/JLGaJ')); -elevated" -f ($myinvocation.MyCommand.Definition))
+		Start-Process powershell.exe -Verb RunAs -ArgumentList ("-noprofile -command Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://raw.githubusercontent.com/DeadKper/Windows10Script/main/Instalar.ps1?token=AINZBETP3VJ6LYLMBQBU2BK73HH26')); -elevated" -f ($myinvocation.MyCommand.Definition))
 	}
 	exit
 }
