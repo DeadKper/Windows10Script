@@ -1,7 +1,7 @@
 #Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://raw.githubusercontent.com/DeadKper/Windows10Script/main/Instalar.ps1?token=AINZBETP3VJ6LYLMBQBU2BK73HH26'))
 
 #https://git.io/JLGaJ
-#ver 0.3.2
+#ver 0.3.3
 
 # Recive parameter elevated
 param([switch]$elevated)
@@ -15,42 +15,48 @@ if ([Security.Principal.WindowsIdentity]::GetCurrent().Groups -notcontains 'S-1-
 	exit
 }
 # Running in admin
-# Ask if we want to install all apps
 
-$job = "_"
-
-while($job -match "^_$") {
+# Ask for the job to do and loop until a valid option is entered
+$job=""
+while($True) {
+	# Clear console
 	Clear-Host
+	# Display menu
 	Write-Host "1.- Normal install"
 	Write-Host "2.- Full install"
 	Write-Host "3.- Configuration only"
 	Write-Host "0.- Exit"
+	# Read option
 	$job = Read-Host -Prompt " >"
+	# If no option is submited then assing job then loop
 	if (-not $job) {
-		$job="1"
+		continue
 	}
-	if($job -match "^[0-9]{1,9}$") {
-		$job=[int]::Parse($job)
+	# If a non alphanumeric value is entered then loop
+	if($job -notmatch "^[0-9]{1,9}$") {
+		continue
 	}
+	# Parse the string to a int value
+	$job=[int]::Parse($job)
+	# If a value greater than the displayed options is submited then loop
+	if($job -gt 3) {
+		continue
+	}
+	# If the exit value is entered then close the console
 	if($job -eq 0) {
 		exit
 	}
-	if($job -gt 2) {
-		$job = "_"
-	}
+	# Reduce job value by 1 to start from 0 and break the loop
 	$job=$job - 1
+	break
 }
 
-# Set bypass policy and security protocol
-Set-ExecutionPolicy Bypass -Scope Process -Force
-[System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072;
-
-# Remove wget alias
+# Remove wget alias to use the real wget later on
 while (Test-Path Alias:wget) {
 	Remove-Item Alias:wget
 }
 
-# Install chocolatey with 7-zip
+# Install base apps if not installed because they will be needes later
 if (-not (Test-Path "$env:ProgramData\chocolatey\choco.exe")) {
 	Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
 }
@@ -64,14 +70,13 @@ if (-not (Test-Path "$env:ProgramData\chocolatey\bin\sed.exe")) {
 	choco install sed -y
 }
 
+# Set the 7z alias to extract files
 Set-Alias 7z "$env:ProgramFiles\7-Zip\7z.exe"
 
 # Create app instalation string
 if ($job -ne 0) {
-	# Install chocolatey
-	Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
-
 	[System.Collections.ArrayList]$apps = "adoptopenjdk8openj9jre", "firefox"
+
 	if ($job -contains 'f') {
 		$apps.add("discord")
 		$apps.add("steam")
@@ -101,6 +106,7 @@ if ($job -ne 0) {
 		Write-Output $graphics
 		Start-Process https://www.amd.com/en/support
 	} else {
+		# If option can't be detected ask for the graphics drivers to install
 		$graphics = Read-Host -Prompt 'Insert graphics to install: [I]ntel, [N]vidia, [A]md/[R]adeon'
 		if ($graphics -contains 'n') {
 			$apps.add("geforce-experience")
@@ -129,6 +135,7 @@ Function GDownload {
 		[string]$fileDestination,
 		[bool]$useCookies
 	)
+	# Use normal wget if cookies are not needed (file is less than 100mb)
 	if (-not $useCookies) {
 		wget -O $fileDestination "https://docs.google.com/uc?export=download&id=$googleFileId"
 		return
@@ -152,7 +159,7 @@ Write-Host "Creating Restore Point incase something bad happens"
 Enable-ComputerRestore -Drive "C:\"
 Checkpoint-Computer -Description "RestorePoint1" -RestorePointType "MODIFY_SETTINGS"
 
-# Add all registry
+# Add all registry for later use
 New-PSDrive -PSProvider Registry -Name HKU -Root HKEY_USERS
 New-PSDrive -PSProvider Registry -Name HKCC -Root HKEY_CURRENT_CONFIG
 New-PSDrive -PSProvider Registry -Name HKCR -Root HKEY_CLASSES_ROOT
@@ -518,6 +525,7 @@ Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Search
 Write-Host "Hiding Taskbar Search icon / box..."
 Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Search" -Name "SearchboxTaskbarMode" -Type DWord -Value 0
 
+# Check if the config only option is not the one picked by the user
 if ($job -ne 0) {
 	#
 	$fileName="$env:ProgramData\Files.7z"
