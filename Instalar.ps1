@@ -1,22 +1,43 @@
-#Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://git.io/JLGaJ'))
-#ver 0.3.0
+#Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://git.io/JLGaJ'))
+#ver 0.3.1
 
 # Recive parameter elevated
-param([switch]$Elevated)
+param([switch]$elevated)
 
 # Check if we have admin, if not, try to elevate
 if ([Security.Principal.WindowsIdentity]::GetCurrent().Groups -notcontains 'S-1-5-32-544') {
 	# Check if we have already tried to elevate, if not, try it
 	if (-Not $elevated) {
-		#Start-Process powershell.exe -Verb RunAs -ArgumentList ("-noprofile -file '{0}' -elevated" -f ($myinvocation.MyCommand.Definition))
-		Start-Process powershell.exe -Verb RunAs -ArgumentList ("-noprofile -command iex ((New-Object System.Net.WebClient).DownloadString('https://git.io/JLGaJ')); -elevated" -f ($myinvocation.MyCommand.Definition))
+		Start-Process powershell.exe -Verb RunAs -ArgumentList ("-noprofile -command Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://git.io/JLGaJ')); -elevated" -f ($myinvocation.MyCommand.Definition))
 	}
 	exit
 }
 # Running in admin
 # Ask if we want to install all apps
 
-$job = Read-Host -Prompt '[N]ormal install, [F]ull install, [C]onfiguration only'
+$job = "_"
+
+while($job -match "^_$") {
+	Clear-Host
+	Write-Host "1.- Normal install"
+	Write-Host "2.- Full install"
+	Write-Host "3.- Configuration only"
+	Write-Host "0.- Exit"
+	$job = Read-Host -Prompt " >"
+	if (-not $job) {
+		$job="1"
+	}
+	if($job -match "^[0-9]{1,9}$") {
+		$job=[int]::Parse($job)
+	}
+	if($job -eq 0) {
+		exit
+	}
+	if($job -gt 2) {
+		$job = "_"
+	}
+	$job=$job - 1
+}
 
 # Set bypass policy and security protocol
 Set-ExecutionPolicy Bypass -Scope Process -Force
@@ -44,7 +65,7 @@ if (-not (Test-Path "$env:ProgramData\chocolatey\bin\sed.exe")) {
 Set-Alias 7z "$env:ProgramFiles\7-Zip\7z.exe"
 
 # Create app instalation string
-if ($job -notcontains 'c') {
+if ($job -ne 0) {
 	# Install chocolatey
 	Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
 
@@ -495,7 +516,7 @@ Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Search
 Write-Host "Hiding Taskbar Search icon / box..."
 Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Search" -Name "SearchboxTaskbarMode" -Type DWord -Value 0
 
-if ($job -notcontains 'c') {
+if ($job -ne 0) {
 	#
 	$fileName="$env:ProgramData\Files.7z"
 	Write-Host "Downloading additional files"
