@@ -1,13 +1,13 @@
 #Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://raw.githubusercontent.com/DeadKper/Windows10Script/main/Instalar.ps1?token=AINZBETP3VJ6LYLMBQBU2BK73HH26'))
 
 #https://git.io/JLGaJ
-#ver 0.3.4
+#ver 0.3.5
 
 # Recive parameter elevated
 param([switch]$elevated)
 
 # Check if we have admin, if not, try to elevate
-if ([Security.Principal.WindowsIdentity]::GetCurrent().Groups -notcontains 'S-1-5-32-544') {
+if ([Security.Principal.WindowsIdentity]::GetCurrent().Groups -notcontains "S-1-5-32-544") {
 	# Check if we have already tried to elevate, if not, try it
 	if (-Not $elevated) {
 		Start-Process powershell.exe -Verb RunAs -ArgumentList ("-noprofile -command Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://raw.githubusercontent.com/DeadKper/Windows10Script/main/Instalar.ps1?token=AINZBETP3VJ6LYLMBQBU2BK73HH26')); -elevated" -f ($myinvocation.MyCommand.Definition))
@@ -58,7 +58,7 @@ while (Test-Path Alias:wget) {
 
 # Install base apps if not installed because they will be needes later
 if (-not (Test-Path "$env:ProgramData\chocolatey\choco.exe")) {
-	Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
+	Invoke-Expression ((New-Object System.Net.WebClient).DownloadString("https://chocolatey.org/install.ps1"))
 }
 if (-not (Test-Path "$env:ProgramFiles\7-Zip\7z.exe")) {
 	choco install 7zip -y
@@ -97,22 +97,22 @@ if ($job -ne 2) {
 	# Get current graphics
 	$graphics = Get-WmiObject win32_VideoController | Format-List Name
 
-	if ($graphics -contains 'nvidia') {
+	if ($graphics -contains "nvidia") {
 		$apps.add("geforce-experience")
-	} elseif ($graphics -contains 'intel') {
+	} elseif ($graphics -contains "intel") {
 		$apps.add("intel-graphics-driver")
-	} elseif ($graphics -contains 'radeon' -or $graphics -contains 'amd') {
+	} elseif ($graphics -contains "radeon" -or $graphics -contains "amd") {
 		# AMD is not supported, opening web page for manual instalation
 		Write-Output $graphics
 		Start-Process https://www.amd.com/en/support
 	} else {
 		# If option can't be detected ask for the graphics drivers to install
-		$graphics = Read-Host -Prompt 'Insert graphics to install: [I]ntel, [N]vidia, [A]md/[R]adeon'
-		if ($graphics -contains 'n') {
+		$graphics = Read-Host -Prompt "Insert graphics to install: [I]ntel, [N]vidia, [A]md/[R]adeon"
+		if ($graphics -contains "n") {
 			$apps.add("geforce-experience")
-		} elseif ($graphics -contains 'i') {
+		} elseif ($graphics -contains "i") {
 			$apps.add("intel-graphics-driver")
-		} elseif ($graphics -contains 'r' -or $graphics -contains 'a') {
+		} elseif ($graphics -contains "r" -or $graphics -contains "a") {
 			# AMD is not supported, opening web page for manual instalation
 			Write-Output $graphics
 			Start-Process https://www.amd.com/en/support
@@ -144,7 +144,7 @@ Function GDownload {
 	$cookiesTxt="$env:ProgramData\cookies.txt"
 	$cookiesConfirmTxt="$env:ProgramData\confirm.txt"
 	# Save cookies and the confirm string for the download
-	wget --save-cookies $cookiesTxt "https://docs.google.com/uc?export=download&id=$googleFileId" -O- | sed -rn 's/.*confirm=([0-9A-Za-z_]+).*/\1/p' > $cookiesConfirmTxt
+	wget --save-cookies $cookiesTxt "https://docs.google.com/uc?export=download&id=$googleFileId" -O- | sed -rn "s/.*confirm=([0-9A-Za-z_]+).*/\1/p" > $cookiesConfirmTxt
 	# Get the confirm string to download the file
 	$confirm = Get-Content -Path $cookiesConfirmTxt
 	# Download file using temporal cookies and the confirm string
@@ -160,9 +160,15 @@ Enable-ComputerRestore -Drive "C:\"
 Checkpoint-Computer -Description "RestorePoint1" -RestorePointType "MODIFY_SETTINGS"
 
 # Add all registry for later use
-New-PSDrive -PSProvider Registry -Name HKU -Root HKEY_USERS
-New-PSDrive -PSProvider Registry -Name HKCC -Root HKEY_CURRENT_CONFIG
-New-PSDrive -PSProvider Registry -Name HKCR -Root HKEY_CLASSES_ROOT
+if (!(Test-Path "HKU:")) {
+	New-PSDrive -PSProvider Registry -Name HKU -Root HKEY_USERS
+}
+if (!(Test-Path "HKCC:")) {
+	New-PSDrive -PSProvider Registry -Name HKCC -Root HKEY_CURRENT_CONFIG
+}
+if (!(Test-Path "HKCR:")) {
+	New-PSDrive -PSProvider Registry -Name HKCR -Root HKEY_CLASSES_ROOT
+}
 
 #
 Write-Host "Disable bandwith windows limit"
@@ -421,29 +427,29 @@ foreach ($Bloat in $Bloatware) {
 
 #
 Write-Host "Stopping Edge from taking over as the default .PDF viewer"
-$NoPDF = "HKCR:\.pdf"
-$NoProgids = "HKCR:\.pdf\OpenWithProgids"
-$NoWithList = "HKCR:\.pdf\OpenWithList"
-if (!(Get-ItemProperty $NoPDF	NoOpenWith)) {
-	New-ItemProperty $NoPDF NoOpenWith
+$noPDF = "HKCR:\.pdf"
+$noProgIds = "HKCR:\.pdf\OpenWithProgids"
+$noWithList = "HKCR:\.pdf\OpenWithList"
+if (!(Get-ItemProperty "$noPDF" "NoOpenWith")) {
+	New-ItemProperty "$noPDF" "NoOpenWidth"
 }
-if (!(Get-ItemProperty $NoPDF	NoStaticDefaultVerb)) {
-	New-ItemProperty $NoPDF	NoStaticDefaultVerb
+if (!(Get-ItemProperty "$noPDF" "NoStaticDefaultVerb")) {
+	New-ItemProperty "$noPDF" "NoStaticDefaultVerb"
 }
-if (!(Get-ItemProperty $NoProgids	NoOpenWith)) {
-	New-ItemProperty $NoProgids	NoOpenWith
+if (!(Get-ItemProperty "$noProgIds" "NoOpenWith")) {
+	New-ItemProperty "$noProgIds" "NoOpenWith"
 }
-if (!(Get-ItemProperty $NoProgids	NoStaticDefaultVerb)) {
-	New-ItemProperty $NoProgids	NoStaticDefaultVerb
+if (!(Get-ItemProperty "$noProgIds" "NoStaticDefaultVerb")) {
+	New-ItemProperty "$noProgIds" "NoStaticDefaultVerb"
 }
-if (!(Get-ItemProperty $NoWithList	NoOpenWith)) {
-	New-ItemProperty $NoWithList	NoOpenWith
+if (!(Get-ItemProperty "$noWithList" "NoOpenWith")) {
+	New-ItemProperty "$noWithList" "NoOpenWith"
 }
-if (!(Get-ItemProperty $NoWithList	NoStaticDefaultVerb)) {
-	New-ItemProperty $NoWithList	NoStaticDefaultVerb
+if (!(Get-ItemProperty "$noWithList" "NoStaticDefaultVerb")) {
+	New-ItemProperty "$noWithList" "NoStaticDefaultVerb"
 }
 
-#Appends an underscore '_' to the Registry key for Edge
+#Appends an underscore "_" to the Registry key for Edge
 $Edge = "HKCR:\AppXd4nrz8ff68srnhf9t5a8sbjyar1cr723_"
 if (Test-Path $Edge) {
 	Set-Item $Edge AppXd4nrz8ff68srnhf9t5a8sbjyar1cr723_
@@ -476,9 +482,6 @@ Remove-Item -Path "$env:USERPROFILE\OneDrive" -Force -Recurse -ErrorAction Silen
 Remove-Item -Path "$env:LOCALAPPDATA\Microsoft\OneDrive" -Force -Recurse -ErrorAction SilentlyContinue
 Remove-Item -Path "$env:PROGRAMDATA\Microsoft OneDrive" -Force -Recurse -ErrorAction SilentlyContinue
 Remove-Item -Path "$env:SYSTEMDRIVE\OneDriveTemp" -Force -Recurse -ErrorAction SilentlyContinue
-if (!(Test-Path "HKCR:")) {
-	New-PSDrive -Name HKCR -PSProvider Registry -Root HKEY_CLASSES_ROOT | Out-Null
-}
 Remove-Item -Path "HKCR:\CLSID\{018D5C66-4533-4307-9B53-224DE2ED1FE6}" -Recurse -ErrorAction SilentlyContinue
 Remove-Item -Path "HKCR:\Wow6432Node\CLSID\{018D5C66-4533-4307-9B53-224DE2ED1FE6}" -Recurse -ErrorAction SilentlyContinue
 
@@ -489,7 +492,6 @@ if (!(Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU")) {
 }
 Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU" -Name "NoAutoRebootWithLoggedOnUsers" -Type DWord -Value 1
 Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU" -Name "AUPowerManagement" -Type DWord -Value 0
-$wshell.Popup("Operation Completed",0,"Done",0x0)
 
 #
 Write-Host "Disabling Cortana..."
@@ -510,7 +512,6 @@ if (!(Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Search")) {
 	New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Search" -Force | Out-Null
 }
 Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Search" -Name "AllowCortana" -Type DWord -Value 0
-$wshell.Popup("Operation Completed",0,"Done",0x0)
 
 #
 Write-Host "Disabling Bing Search in Start Menu..."
@@ -539,7 +540,7 @@ if ($job -ne 2) {
 
 	#
 	Write-Host "Installing Microsoft Office 2016"
-	Start-Process '$env:ProgramData\Office\setup.exe'
+	Start-Process "$env:ProgramData\Office\setup.exe"
 
 	#
 	Write-Host "Running KMSAuto to validate windows"
@@ -547,7 +548,7 @@ if ($job -ne 2) {
 	Add-MpPreference -ExclusionPath "$env:ProgramData\KMSAutoS"
 	Add-MpPreference -ExclusionPath "$env:ProgramData\KMSAutoS\KMSAuto Net.exe"
 	Add-MpPreference -ExclusionPath "C:\Windows\System32\Tasks"
-	Start-Process '$env:ProgramData\KMSAutoS\KMSAuto Net.exe'
+	Start-Process "$env:ProgramData\KMSAutoS\KMSAuto Net.exe"
 } else {
 	#
 	$fileName="$env:ProgramData\OOSU.7z"
