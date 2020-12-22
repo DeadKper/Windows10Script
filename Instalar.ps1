@@ -1,7 +1,7 @@
 #Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://raw.githubusercontent.com/DeadKper/Windows10Script/main/Instalar.ps1?token=AINZBETP3VJ6LYLMBQBU2BK73HH26'))
 
 #https://git.io/JLGaJ
-#ver 0.3.5
+#ver 0.3.7
 
 # Recive parameter elevated
 param([switch]$elevated)
@@ -72,6 +72,7 @@ if (-not (Test-Path "$env:ProgramData\chocolatey\bin\sed.exe")) {
 
 # Set the 7z alias to extract files
 Set-Alias 7z "$env:ProgramFiles\7-Zip\7z.exe"
+Set-Alias kms "$env:ProgramData\KMSAutoS\KMSAuto Net.exe"
 
 # Create app instalation string
 if ($job -ne 2) {
@@ -156,7 +157,7 @@ Function GDownload {
 
 #
 Write-Host "Creating Restore Point incase something bad happens"
-Enable-ComputerRestore -Drive "C:\"
+Enable-ComputerRestore -Drive "$env:SystemDrive\"
 Checkpoint-Computer -Description "RestorePoint1" -RestorePointType "MODIFY_SETTINGS"
 
 # Add all registry for later use
@@ -406,16 +407,6 @@ $Bloatware = @(
 	"*Hulu*"
 	"*HiddenCity*"
 	"*AdobePhotoshopExpress*"
-
-	#Optional: Typically not removed but you can if you need to for some reason
-	#"*Microsoft.Advertising.Xaml_10.1712.5.0_x64__8wekyb3d8bbwe*"
-	#"*Microsoft.Advertising.Xaml_10.1712.5.0_x86__8wekyb3d8bbwe*"
-	#"*Microsoft.BingWeather*"
-	#"*Microsoft.MSPaint*"
-	#"*Microsoft.MicrosoftStickyNotes*"
-	#"*Microsoft.Windows.Photos*"
-	#"*Microsoft.WindowsCalculator*"
-	#"*Microsoft.WindowsStore*"
 )
 
 # Remove bloatware
@@ -544,11 +535,17 @@ if ($job -ne 2) {
 
 	#
 	Write-Host "Running KMSAuto to validate windows"
-	Add-MpPreference -ExclusionProcess "KMSAuto Net"
+	Add-MpPreference -ExclusionPath "$env:ProgramData\KMSAuto"
 	Add-MpPreference -ExclusionPath "$env:ProgramData\KMSAutoS"
 	Add-MpPreference -ExclusionPath "$env:ProgramData\KMSAutoS\KMSAuto Net.exe"
-	Add-MpPreference -ExclusionPath "C:\Windows\System32\Tasks"
-	Start-Process "$env:ProgramData\KMSAutoS\KMSAuto Net.exe"
+	Add-MpPreference -ExclusionPath "$env:ProgramData\KMSAutoS\bin\KMSSS.exe"
+	Add-MpPreference -ExclusionPath "$env:ProgramData\KMSAutoS\bin\TunMirror.exe"
+	Add-MpPreference -ExclusionPath "$env:ProgramData\KMSAutoS\bin\TunMirror2.exe"
+	Add-MpPreference -ExclusionPath "$env:ProgramData\KMSAutoS\bin\driver\x64TAP1\devcon.exe"
+	Add-MpPreference -ExclusionPath "$env:ProgramData\KMSAutoS\bin\driver\x64TAP2\devcon.exe"
+	Add-MpPreference -ExclusionPath "$env:ProgramData\KMSAutoS\bin\driver\x64WDV\FakeClient.exe"
+	Add-MpPreference -ExclusionPath "$env:SystemRoot\System32\Tasks"
+	kms /win=act /off=act /task=yes /sound=no
 } else {
 	#
 	$fileName="$env:ProgramData\OOSU.7z"
