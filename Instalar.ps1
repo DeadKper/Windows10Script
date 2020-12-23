@@ -1,7 +1,7 @@
 #Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; Invoke-Expression ((New-Object System.Net.WebClient).DownloadString(""https://raw.githubusercontent.com/DeadKper/Windows10Script/main/Instalar.ps1?token=AINZBETP3VJ6LYLMBQBU2BK73HH26""))
 
 #https://git.io/JLGaJ
-#ver 0.4.0
+#ver 0.4.2
 
 # Recive parameter elevated
 param([switch]$elevated)
@@ -142,7 +142,6 @@ if (-not (Test-Path "$env:ProgramData\chocolatey\bin\sed.exe")) {
 
 # Set the 7z alias to extract files
 Set-Alias 7z "$env:ProgramFiles\7-Zip\7z.exe"
-Set-Alias kms "$env:ProgramData\KMSAutoS\KMSAuto Net.exe"
 
 # Create app instalation string
 if ($job -ne 2) {
@@ -204,25 +203,22 @@ Function GDownload {
 	param(
 		[string]$googleFileId,
 		[string]$fileDestination,
-		[bool]$useCookies
+		[bool]$useCookies,
+		[string]$arguments
 	)
 	# Use normal wget if cookies are not needed (file is less than 100mb)
 	if (-not $useCookies) {
-		wget -O $fileDestination "https://docs.google.com/uc?export=download&id=$googleFileId"
+		wget $arguments -O $fileDestination "https://docs.google.com/uc?export=download&id=$googleFileId"
 		return
 	}
-	# Define path to temporal cookies
-	$cookiesTxt="$env:ProgramData\cookies.txt"
-	$cookiesConfirmTxt="$env:ProgramData\confirm.txt"
+	# Define path for temporal cookies
+	$cookies="$env:ProgramData\temp_gdrive_cookies"
 	# Save cookies and the confirm string for the download
-	wget --save-cookies $cookiesTxt "https://docs.google.com/uc?export=download&id=$googleFileId" -O- | sed -rn "s/.*confirm=([0-9A-Za-z_]+).*/\1/p" > $cookiesConfirmTxt
-	# Get the confirm string to download the file
-	$confirm = Get-Content -Path $cookiesConfirmTxt
+	$confirm = wget --save-cookies $cookies "https://docs.google.com/uc?export=download&id=$googleFileId" -O- | sed -rn "s/.*confirm=([0-9A-Za-z_]+).*/\1/p"
 	# Download file using temporal cookies and the confirm string
-	wget --load-cookies $cookiesTxt -O $fileDestination "https://docs.google.com/uc?export=download&id=$googleFileId&confirm=$confirm"
+	wget $arguments --load-cookies $cookies -O $fileDestination "https://docs.google.com/uc?export=download&id=$googleFileId&confirm=$confirm"
 	# Remove cookies
-	Remove-Item $cookiesTxt
-	Remove-Item $cookiesConfirmTxt
+	Remove-Item $cookies
 }
 
 #
@@ -579,19 +575,17 @@ Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Search" 
 # Check if the config only option is not the one picked by the user
 if ($job -ne 2) {
 	#
-	Set-MpPreference -DisableRealtimeMonitoring 1
-	$fileName="$env:ProgramData\Files.7z"
-	Write-Host "Downloading additional files"
-	GDownload "1OD5cvYwypj2xs0W87yt_eO-N6ltS6nQo" $fileName $True
-
-	#
-	Write-Host "Extracting files and deleting temp files"
-	7z x $fileName -o"$env:ProgramData" -r
+	$fileName="$env:ProgramData\Office\Office.7z"
+	Write-Host "Downloading Microsoft Office 2016"
+	mkdir -f "$env:ProgramData\Office"
+	GDownload "1S0X76A3eCo4Hm9SqeNcqfUoe1nER-OLP" $fileName $True ""
+	7z x $fileName -o"$env:ProgramData\Office" -r
 	Remove-Item $fileName
 
 	#
 	Write-Host "Installing Microsoft Office 2016"
-	Start-Process "$env:ProgramData\Office\setup.exe"
+	Set-Alias office "$env:ProgramData\Office\setup.exe"
+	office /adminfile $env:ProgramData\Office\auto.msp
 
 	#
 	Write-Host "Running KMSAuto to validate windows"
@@ -605,21 +599,16 @@ if ($job -ne 2) {
 	Add-MpPreference -ExclusionPath "$env:ProgramData\KMSAutoS\bin\driver\x64TAP2\devcon.exe"
 	Add-MpPreference -ExclusionPath "$env:ProgramData\KMSAutoS\bin\driver\x64WDV\FakeClient.exe"
 	Add-MpPreference -ExclusionPath "$env:SystemRoot\System32\Tasks"
+	mkdir -f "$env:ProgramData\KMSAutoS"
+	wget --continue --output-document="$env:ProgramData\KMSAutoS\KMSAuto Net.exe" "https://github.com/DeadKper/Windows10Script/raw/main/Files/KMSAutoS/KMSAuto%20Net.exe"
+	Set-Alias kms "$env:ProgramData\KMSAutoS\KMSAuto Net.exe"
 	kms /win=act /off=act /task=yes /sound=no
-} else {
-	#
-	$fileName="$env:ProgramData\OOSU.7z"
-	Write-Host "Downloading O&O Shutup"
-	GDownload "1X4_Y4sER4Zf5zIWd-GUAVus34bqZe0EQ" $fileName $False
-	7z x $fileName -o"$env:ProgramData" -r
-	Remove-Item $fileName
 }
 
 #
 Write-Host "Running O & O Shutup with Recommended Settings"
+mkdir -f "$env:ProgramData\OOSU"
+wget --continue --output-document="$env:ProgramData\OOSU\OOSU10.exe" "https://github.com/DeadKper/Windows10Script/raw/main/Files/OOSU/OOSU10.exe"
+wget --continue --output-document="$env:ProgramData\OOSU\ooshutup10.cfg" "https://raw.githubusercontent.com/DeadKper/Windows10Script/main/Files/OOSU/ooshutup10.cfg"
 Set-Alias OOSU "$env:ProgramData\OOSU\OOSU10.exe"
 OOSU $env:ProgramData\OOSU\ooshutup10.cfg /quiet
-
-#
-Write-Host "Activating windows defender in case it was disabled"
-Set-MpPreference -DisableRealtimeMonitoring 0
