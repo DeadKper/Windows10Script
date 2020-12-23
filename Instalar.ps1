@@ -1,7 +1,7 @@
 #Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; Invoke-Expression ((New-Object System.Net.WebClient).DownloadString(""https://raw.githubusercontent.com/DeadKper/Windows10Script/main/Instalar.ps1?token=AINZBETP3VJ6LYLMBQBU2BK73HH26""))
 
 #https://git.io/JLGaJ
-#ver 0.3.9
+#ver 0.4.0
 
 # Recive parameter elevated
 param([switch]$elevated)
@@ -122,7 +122,7 @@ if (-not (Test-Path "$env:ProgramFiles\7-Zip\7z.exe")) {
 		if (-not (Test-Path "HKCR:\7-Zip.$type\DefaultIcon")) {
 			New-Item -Path "HKCR:\7-Zip.$type\DefaultIcon"
 			New-ItemProperty -Path "HKCR:\7-Zip.$type\DefaultIcon" -Name "(Default)" -Type String -Value "$env:ProgramFiles\7-Zip\7z.dll,$icon"
-		} elseif ((Get-ItemProperty -Path "HKCR:\7-Zip.${type}\DefaultIcon") | Select-Object -ExpandProperty "(Default)" -ErrorAction SilentlyContinue){
+		} elseif (-not ((Get-ItemProperty -Path "HKCR:\7-Zip.$type\DefaultIcon") | Select-Object -ExpandProperty "(Default)" -ErrorAction SilentlyContinue)){
 			New-ItemProperty -Path "HKCR:\7-Zip.$type\DefaultIcon" -Name "(Default)" -Type String -Value "$env:ProgramFiles\7-Zip\7z.dll,$icon"
 		}
 		# New-Item -Path "HKCR:\7-Zip.$type\shell"
@@ -621,5 +621,5 @@ Set-Alias OOSU "$env:ProgramData\OOSU\OOSU10.exe"
 OOSU $env:ProgramData\OOSU\ooshutup10.cfg /quiet
 
 #
-Write-Host "Activating windows defender"
+Write-Host "Activating windows defender in case it was disabled"
 Set-MpPreference -DisableRealtimeMonitoring 0
