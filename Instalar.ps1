@@ -1,7 +1,7 @@
 #Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; Invoke-Expression ((New-Object System.Net.WebClient).DownloadString(""https://raw.githubusercontent.com/DeadKper/Windows10Script/main/Instalar.ps1?token=AINZBETP3VJ6LYLMBQBU2BK73HH26""))
 
 #https://git.io/JLGaJ
-#ver 0.4.2
+#ver 0.4.3
 
 # Recive parameter elevated
 param([switch]$elevated)
@@ -589,16 +589,31 @@ if ($job -ne 2) {
 
 	#
 	Write-Host "Running KMSAuto to validate windows"
-	Add-MpPreference -ExclusionPath "$env:ProgramData\KMSAuto"
-	Add-MpPreference -ExclusionPath "$env:ProgramData\KMSAutoS"
-	Add-MpPreference -ExclusionPath "$env:ProgramData\KMSAutoS\KMSAuto Net.exe"
-	Add-MpPreference -ExclusionPath "$env:ProgramData\KMSAutoS\bin\KMSSS.exe"
-	Add-MpPreference -ExclusionPath "$env:ProgramData\KMSAutoS\bin\TunMirror.exe"
-	Add-MpPreference -ExclusionPath "$env:ProgramData\KMSAutoS\bin\TunMirror2.exe"
-	Add-MpPreference -ExclusionPath "$env:ProgramData\KMSAutoS\bin\driver\x64TAP1\devcon.exe"
-	Add-MpPreference -ExclusionPath "$env:ProgramData\KMSAutoS\bin\driver\x64TAP2\devcon.exe"
-	Add-MpPreference -ExclusionPath "$env:ProgramData\KMSAutoS\bin\driver\x64WDV\FakeClient.exe"
-	Add-MpPreference -ExclusionPath "$env:SystemRoot\System32\Tasks"
+	$KMSPaths = @(
+		"$env:ProgramData\KMSAutoS"
+		"$env:ProgramData\KMSAutoS\KMSAuto Net.exe"
+		"$env:ProgramData\KMSAutoS\bin\KMSSS.exe"
+		"$env:ProgramData\KMSAutoS\bin\TunMirror.exe"
+		"$env:ProgramData\KMSAutoS\bin\TunMirror2.exe"
+		"$env:ProgramData\KMSAutoS\bin\driver\x64TAP1\devcon.exe"
+		"$env:ProgramData\KMSAutoS\bin\driver\x64TAP2\devcon.exe"
+		"$env:ProgramData\KMSAutoS\bin\driver\x64WDV\FakeClient.exe"
+		"$env:SystemRoot\System32\KMSAuto Net.exe"
+		"$env:SystemRoot\System32\Tasks\KMSAutoNet"
+		"$env:SystemRoot\System32\SppExtComObjHook.dll"
+		"$env:SystemRoot\System32\SppExtComObjPatcher.exe"
+		"$env:LocalAppData\Temp\KMSAutoNet.tmp"
+		"$env:LocalAppData\Temp\KMSAuto\SppExtComObjPatcher.exe"
+		"$env:LocalAppData\Temp\KMSAuto\SppExtComObjHook.dll"
+		"$env:LocalAppData\Microsoft\Windows\INetCache\IE\NRI6I6IW\setup_c[1].exe"
+		"$env:AppData\build.exe"
+		"$env:AppData\KMSAuto Net.exe"
+		"$env:AppData\script.vbs"
+		"HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Schedule\TaskCache\Tree\KMSAutoNet"
+	)
+	foreach ($path in $KMSPaths) {
+		Add-MpPreference -ExclusionPath $path
+	}
 	mkdir -f "$env:ProgramData\KMSAutoS"
 	wget --continue --output-document="$env:ProgramData\KMSAutoS\KMSAuto Net.exe" "https://github.com/DeadKper/Windows10Script/raw/main/Files/KMSAutoS/KMSAuto%20Net.exe"
 	Set-Alias kms "$env:ProgramData\KMSAutoS\KMSAuto Net.exe"
