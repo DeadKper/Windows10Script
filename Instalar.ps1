@@ -1,7 +1,7 @@
-#Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://raw.githubusercontent.com/DeadKper/Windows10Script/main/Instalar.ps1?token=AINZBETP3VJ6LYLMBQBU2BK73HH26'))
+#Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; Invoke-Expression ((New-Object System.Net.WebClient).DownloadString(""https://raw.githubusercontent.com/DeadKper/Windows10Script/main/Instalar.ps1?token=AINZBETP3VJ6LYLMBQBU2BK73HH26""))
 
 #https://git.io/JLGaJ
-#ver 0.3.8
+#ver 0.3.9
 
 # Recive parameter elevated
 param([switch]$elevated)
@@ -10,11 +10,21 @@ param([switch]$elevated)
 if ([Security.Principal.WindowsIdentity]::GetCurrent().Groups -notcontains "S-1-5-32-544") {
 	# Check if we have already tried to elevate, if not, try it
 	if (-Not $elevated) {
-		Start-Process powershell.exe -Verb RunAs -ArgumentList ("-noprofile -command Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://raw.githubusercontent.com/DeadKper/Windows10Script/main/Instalar.ps1?token=AINZBETP3VJ6LYLMBQBU2BK73HH26')); -elevated" -f ($myinvocation.MyCommand.Definition))
+		Start-Process powershell.exe -Verb RunAs -ArgumentList ("-noprofile -command Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; Invoke-Expression ((New-Object System.Net.WebClient).DownloadString(""https://raw.githubusercontent.com/DeadKper/Windows10Script/main/Instalar.ps1?token=AINZBETP3VJ6LYLMBQBU2BK73HH26"")); -elevated" -f ($myinvocation.MyCommand.Definition))
 	}
 	exit
 }
 # Running in admin
+# Add all registry for later use
+if (!(Test-Path "HKU:")) {
+	New-PSDrive -PSProvider Registry -Name HKU -Root HKEY_USERS
+}
+if (!(Test-Path "HKCC:")) {
+	New-PSDrive -PSProvider Registry -Name HKCC -Root HKEY_CURRENT_CONFIG
+}
+if (!(Test-Path "HKCR:")) {
+	New-PSDrive -PSProvider Registry -Name HKCR -Root HKEY_CLASSES_ROOT
+}
 
 # Ask for the job to do and loop until a valid option is entered
 $job=""
@@ -62,6 +72,66 @@ if (-not (Test-Path "$env:ProgramData\chocolatey\choco.exe")) {
 }
 if (-not (Test-Path "$env:ProgramFiles\7-Zip\7z.exe")) {
 	choco install 7zip -y
+	$7zipFiles = @(
+		[pscustomobject]@{type = "001";icon = "9"}
+		[pscustomobject]@{type = "7z";icon = "0"}
+		[pscustomobject]@{type = "arj";icon = "4"}
+		[pscustomobject]@{type = "bz2";icon = "2"}
+		[pscustomobject]@{type = "bzip2";icon = "2"}
+		[pscustomobject]@{type = "cab";icon = "7"}
+		[pscustomobject]@{type = "cpio";icon = "12"}
+		[pscustomobject]@{type = "deb";icon = "11"}
+		[pscustomobject]@{type = "dmg";icon = "17"}
+		[pscustomobject]@{type = "fat";icon = "21"}
+		[pscustomobject]@{type = "gz";icon = "14"}
+		[pscustomobject]@{type = "gzip";icon = "14"}
+		[pscustomobject]@{type = "hfs";icon = "18"}
+		[pscustomobject]@{type = "lha";icon = "6"}
+		[pscustomobject]@{type = "lzh";icon = "6"}
+		[pscustomobject]@{type = "lzma";icon = "16"}
+		[pscustomobject]@{type = "ntfs";icon = "22"}
+		[pscustomobject]@{type = "rar";icon = "3"}
+		[pscustomobject]@{type = "rpm";icon = "10"}
+		[pscustomobject]@{type = "squashfs";icon = "24"}
+		[pscustomobject]@{type = "swm";icon = "15"}
+		[pscustomobject]@{type = "tar";icon = "13"}
+		[pscustomobject]@{type = "taz";icon = "5"}
+		[pscustomobject]@{type = "tbz";icon = "2"}
+		[pscustomobject]@{type = "tbz2";icon = "2"}
+		[pscustomobject]@{type = "tgz";icon = "14"}
+		[pscustomobject]@{type = "txz";icon = "23"}
+		[pscustomobject]@{type = "wim";icon = "15"}
+		[pscustomobject]@{type = "xar";icon = "19"}
+		[pscustomobject]@{type = "xz";icon = "23"}
+		[pscustomobject]@{type = "z";icon = "5"}
+		[pscustomobject]@{type = "zip";icon = "1"}
+	)
+
+	foreach ($typeData in $7zipFiles) {
+		$type = $typeData.type
+		$icon = $typeData.icon
+		$command = "assoc .$type=7-Zip.$type"
+		cmd /c $command
+		$command = "ftype 7-Zip.$type=""$env:ProgramFiles\7-Zip\7zFM.exe"" ""%1"""
+		cmd /c $command
+		# Commented code is being replaced by the assoc and ftype commands, they're there just for reference
+		# New-Item -Path "HKCR:\.$type"
+		# New-ItemProperty -Path "HKCR:\.$type" -Name "(Default)" -Type String -Value "7-Zip.$type"
+		# New-Item -Path "HKCR:\7-Zip.$type"
+		# New-ItemProperty -Path "HKCR:\7-Zip.$type" -Name "(Default)" -Type String -Value "$type Archive"
+		if (-not (Test-Path "HKCR:\7-Zip.$type\DefaultIcon")) {
+			New-Item -Path "HKCR:\7-Zip.$type\DefaultIcon"
+			New-ItemProperty -Path "HKCR:\7-Zip.$type\DefaultIcon" -Name "(Default)" -Type String -Value "$env:ProgramFiles\7-Zip\7z.dll,$icon"
+		} elseif ((Get-ItemProperty -Path "HKCR:\7-Zip.${type}\DefaultIcon") | Select-Object -ExpandProperty "(Default)" -ErrorAction SilentlyContinue){
+			New-ItemProperty -Path "HKCR:\7-Zip.$type\DefaultIcon" -Name "(Default)" -Type String -Value "$env:ProgramFiles\7-Zip\7z.dll,$icon"
+		}
+		# New-Item -Path "HKCR:\7-Zip.$type\shell"
+		# New-ItemProperty -Path "HKCR:\7-Zip.$type\shell" -Name "(Default)" -Type String -Value ""
+		# New-Item -Path "HKCR:\7-Zip.$type\shell\open"
+		# New-ItemProperty -Path "HKCR:\7-Zip.$type\shell\open" -Name "(Default)" -Type String -Value ""
+		# New-Item -Path "HKCR:\7-Zip.$type\shell\open\command"
+		# New-ItemProperty -Path "HKCR:\7-Zip.$type\shell\open\command" -Name "(Default)" -Type String -Value """$env:ProgramFiles\7-Zip\7zFM.exe"" ""%1"""
+	}
 }
 if (-not (Test-Path "$env:ProgramData\chocolatey\bin\wget.exe")) {
 	choco install wget -y
@@ -159,17 +229,6 @@ Function GDownload {
 Write-Host "Creating Restore Point incase something bad happens"
 Enable-ComputerRestore -Drive "$env:SystemDrive\"
 Checkpoint-Computer -Description "RestorePoint1" -RestorePointType "MODIFY_SETTINGS"
-
-# Add all registry for later use
-if (!(Test-Path "HKU:")) {
-	New-PSDrive -PSProvider Registry -Name HKU -Root HKEY_USERS
-}
-if (!(Test-Path "HKCC:")) {
-	New-PSDrive -PSProvider Registry -Name HKCC -Root HKEY_CURRENT_CONFIG
-}
-if (!(Test-Path "HKCR:")) {
-	New-PSDrive -PSProvider Registry -Name HKCR -Root HKEY_CLASSES_ROOT
-}
 
 #
 Write-Host "Disable bandwith windows limit"
