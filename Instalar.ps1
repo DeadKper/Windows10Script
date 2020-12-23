@@ -1,7 +1,7 @@
 #Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; Invoke-Expression ((New-Object System.Net.WebClient).DownloadString(""https://raw.githubusercontent.com/DeadKper/Windows10Script/main/Instalar.ps1?token=AINZBETP3VJ6LYLMBQBU2BK73HH26""))
 
 #https://git.io/JLGaJ
-#ver 0.4.3
+#ver 0.4.4
 
 # Recive parameter elevated
 param([switch]$elevated)
@@ -609,6 +609,7 @@ if ($job -ne 2) {
 		"$env:AppData\build.exe"
 		"$env:AppData\KMSAuto Net.exe"
 		"$env:AppData\script.vbs"
+		"HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Schedule\TaskCache\Tree\KMSAutoNet"
 		"HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Schedule\TaskCache\Tree\KMSAutoNet"
 	)
 	foreach ($path in $KMSPaths) {
