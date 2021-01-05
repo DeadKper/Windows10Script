@@ -1,7 +1,11 @@
-#Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; Invoke-Expression ((New-Object System.Net.WebClient).DownloadString(""https://raw.githubusercontent.com/DeadKper/Windows10Script/main/Instalar.ps1?token=AINZBETP3VJ6LYLMBQBU2BK73HH26""))
+#Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; Invoke-Expression ((New-Object System.Net.WebClient).DownloadString("https://raw.githubusercontent.com/DeadKper/Windows10Script/main/Instalar.ps1?token=AINZBETP3VJ6LYLMBQBU2BK73HH26"))
 
 #https://git.io/JLGaJ
-#ver 0.4.4
+#ver 0.4.6
+
+#Windows 10 auto installer for essential programs and activation of windows 10 and office 2016
+#Open a powershell windows (is recommended to open it with admin) then copy and paste the command from the first line
+#Press enter and
 
 # Recive parameter elevated
 param([switch]$elevated)
@@ -61,6 +65,15 @@ while($True) {
 	break
 }
 
+#
+Write-Host "Leave empty or press a different character then the 4 asked to skip this process"
+$graphics = Read-Host -Prompt "Insert graphics to install: [I]ntel, [N]vidia, [A]md/[R]adeon"
+if ($graphics -contains "r" -or $graphics -contains "a") {
+	#
+	Write-Host "AMD is not supported by chocolatey, opening web page for manual instalation"
+	Start-Process https://www.amd.com/en/support
+}
+
 # Remove wget alias to use the real wget later on
 while (Test-Path Alias:wget) {
 	Remove-Item Alias:wget
@@ -68,6 +81,9 @@ while (Test-Path Alias:wget) {
 
 # Install base apps if not installed because they will be needes later
 if (-not (Test-Path "$env:ProgramData\chocolatey\choco.exe")) {
+	# Force the parameters again, in some cases it's needed don't really know why
+	Set-ExecutionPolicy Bypass -Scope Process -Force
+	[System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072
 	Invoke-Expression ((New-Object System.Net.WebClient).DownloadString("https://chocolatey.org/install.ps1"))
 }
 if (-not (Test-Path "$env:ProgramFiles\7-Zip\7z.exe")) {
@@ -164,38 +180,16 @@ if ($job -ne 2) {
 		$apps.add("powertoys")
 	}
 
-	# Get current graphics
-	$graphics = Get-WmiObject win32_VideoController | Format-List Name
-
-	if ($graphics -contains "nvidia") {
+	if ($graphics -contains "n") {
 		$apps.add("geforce-experience")
-	} elseif ($graphics -contains "intel") {
+	} elseif ($graphics -contains "i") {
 		$apps.add("intel-graphics-driver")
-	} elseif ($graphics -contains "radeon" -or $graphics -contains "amd") {
-		# AMD is not supported, opening web page for manual instalation
-		Write-Output $graphics
-		Start-Process https://www.amd.com/en/support
-	} else {
-		# If option can't be detected ask for the graphics drivers to install
-		$graphics = Read-Host -Prompt "Insert graphics to install: [I]ntel, [N]vidia, [A]md/[R]adeon"
-		if ($graphics -contains "n") {
-			$apps.add("geforce-experience")
-		} elseif ($graphics -contains "i") {
-			$apps.add("intel-graphics-driver")
-		} elseif ($graphics -contains "r" -or $graphics -contains "a") {
-			# AMD is not supported, opening web page for manual instalation
-			Write-Output $graphics
-			Start-Process https://www.amd.com/en/support
-		}
 	}
 
 	# Install choco apps
 	foreach ($app in $apps) {
 		choco install $app -y
 	}
-
-	# Open 7-Zip to do a manual file association
-	Start-Process "$env:ProgramFiles\7-Zip\7zFM.exe"
 }
 
 # Function to download from google drive
@@ -574,6 +568,8 @@ Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Search" 
 
 # Check if the config only option is not the one picked by the user
 if ($job -ne 2) {
+	# Temporary disable windows defender
+	Set-MpPreference -DisableRealtimeMonitoring $true
 	#
 	$fileName="$env:ProgramData\Office\Office.7z"
 	Write-Host "Downloading Microsoft Office 2016"
@@ -628,7 +624,11 @@ if ($job -ne 2) {
 	mkdir -f "$env:ProgramData\KMSAutoS"
 	wget --continue --output-document="$env:ProgramData\KMSAutoS\KMSAuto Net.exe" "https://github.com/DeadKper/Windows10Script/raw/main/Files/KMSAutoS/KMSAuto%20Net.exe"
 	Set-Alias kms "$env:ProgramData\KMSAutoS\KMSAuto Net.exe"
-	kms /win=act /off=act /task=yes /sound=no
+	kms /win=act /off=act /sound=no
+	# Sleep thread for 1 min and reenable windows defender
+	Write-Host "Sleeping thread to activate windows for 60 seconds"
+	Start-Sleep -Seconds 60
+	Set-MpPreference -DisableRealtimeMonitoring $false
 }
 
 #
