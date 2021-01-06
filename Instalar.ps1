@@ -1,7 +1,7 @@
 #Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; Invoke-Expression ((New-Object System.Net.WebClient).DownloadString("https://raw.githubusercontent.com/DeadKper/Windows10Script/main/Instalar.ps1?token=AINZBETP3VJ6LYLMBQBU2BK73HH26"))
 
 #https://git.io/JLGaJ
-#ver 0.4.6
+#ver 0.4.7
 
 #Windows 10 auto installer for essential programs and activation of windows 10 and office 2016
 #Open a powershell windows (is recommended to open it with admin) then copy and paste the command from the first line
@@ -161,7 +161,7 @@ Set-Alias 7z "$env:ProgramFiles\7-Zip\7z.exe"
 
 # Create app instalation string
 if ($job -ne 2) {
-	[System.Collections.ArrayList]$apps = "adoptopenjdk8openj9jre", "firefox"
+	[System.Collections.ArrayList]$apps = "javaruntime", "firefox"
 
 	if ($job -eq 1) {
 		$apps.add("discord")
