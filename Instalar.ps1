@@ -1,11 +1,7 @@
 #Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; Invoke-Expression ((New-Object System.Net.WebClient).DownloadString("https://raw.githubusercontent.com/DeadKper/Windows10Script/main/Instalar.ps1?token=AINZBETP3VJ6LYLMBQBU2BK73HH26"))
 
 #https://git.io/JLGaJ
-#ver 0.4.9
-
-#Windows 10 auto installer for essential programs and activation of windows 10 and office 2016
-#Open a powershell windows (is recommended to open it with admin) then copy and paste the command from the first line
-#Press enter and
+#ver 0.5.0
 
 # Recive parameter elevated
 param([switch]$elevated)
@@ -19,16 +15,6 @@ if ([Security.Principal.WindowsIdentity]::GetCurrent().Groups -notcontains "S-1-
 	exit
 }
 # Running in admin
-# Add all registry for later use
-if (!(Test-Path "HKU:")) {
-	New-PSDrive -PSProvider Registry -Name HKU -Root HKEY_USERS
-}
-if (!(Test-Path "HKCC:")) {
-	New-PSDrive -PSProvider Registry -Name HKCC -Root HKEY_CURRENT_CONFIG
-}
-if (!(Test-Path "HKCR:")) {
-	New-PSDrive -PSProvider Registry -Name HKCR -Root HKEY_CLASSES_ROOT
-}
 
 # Ask for the job to do and loop until a valid option is entered
 $job=""
@@ -72,6 +58,17 @@ if ($graphics -contains "r" -or $graphics -contains "a") {
 	#
 	Write-Host "AMD is not supported by chocolatey, opening web page for manual instalation"
 	Start-Process https://www.amd.com/en/support
+}
+
+# Add all registry for later use
+if (!(Test-Path "HKU:")) {
+	New-PSDrive -PSProvider Registry -Name HKU -Root HKEY_USERS
+}
+if (!(Test-Path "HKCC:")) {
+	New-PSDrive -PSProvider Registry -Name HKCC -Root HKEY_CURRENT_CONFIG
+}
+if (!(Test-Path "HKCR:")) {
+	New-PSDrive -PSProvider Registry -Name HKCR -Root HKEY_CLASSES_ROOT
 }
 
 # Install base apps if not installed because they will be needes later
@@ -126,17 +123,18 @@ if (-not (Test-Path "$env:ProgramFiles\7-Zip\7z.exe")) {
 		cmd /c $command
 		$command = "ftype 7-Zip.$type=""$env:ProgramFiles\7-Zip\7zFM.exe"" ""%1"""
 		cmd /c $command
-		# Commented code is being replaced by the assoc and ftype commands, they're there just for reference
-		# New-Item -Path "HKCR:\.$type"
-		# New-ItemProperty -Path "HKCR:\.$type" -Name "(Default)" -Type String -Value "7-Zip.$type"
-		# New-Item -Path "HKCR:\7-Zip.$type"
-		# New-ItemProperty -Path "HKCR:\7-Zip.$type" -Name "(Default)" -Type String -Value "$type Archive"
 		if (-not (Test-Path "HKCR:\7-Zip.$type\DefaultIcon")) {
 			New-Item -Path "HKCR:\7-Zip.$type\DefaultIcon"
 			New-ItemProperty -Path "HKCR:\7-Zip.$type\DefaultIcon" -Name "(Default)" -Type String -Value "$env:ProgramFiles\7-Zip\7z.dll,$icon"
 		} elseif (-not ((Get-ItemProperty -Path "HKCR:\7-Zip.$type\DefaultIcon") | Select-Object -ExpandProperty "(Default)" -ErrorAction SilentlyContinue)){
 			New-ItemProperty -Path "HKCR:\7-Zip.$type\DefaultIcon" -Name "(Default)" -Type String -Value "$env:ProgramFiles\7-Zip\7z.dll,$icon"
 		}
+
+		# Commented code is being replaced by the assoc and ftype commands, they're there just for reference
+		# New-Item -Path "HKCR:\.$type"
+		# New-ItemProperty -Path "HKCR:\.$type" -Name "(Default)" -Type String -Value "7-Zip.$type"
+		# New-Item -Path "HKCR:\7-Zip.$type"
+		# New-ItemProperty -Path "HKCR:\7-Zip.$type" -Name "(Default)" -Type String -Value "$type Archive"
 		# New-Item -Path "HKCR:\7-Zip.$type\shell"
 		# New-ItemProperty -Path "HKCR:\7-Zip.$type\shell" -Name "(Default)" -Type String -Value ""
 		# New-Item -Path "HKCR:\7-Zip.$type\shell\open"
