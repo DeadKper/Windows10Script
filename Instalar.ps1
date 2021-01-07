@@ -1,7 +1,7 @@
 #Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; Invoke-Expression ((New-Object System.Net.WebClient).DownloadString("https://raw.githubusercontent.com/DeadKper/Windows10Script/main/Instalar.ps1?token=AINZBETP3VJ6LYLMBQBU2BK73HH26"))
 
 #https://git.io/JLGaJ
-#ver 0.4.7
+#ver 0.4.9
 
 #Windows 10 auto installer for essential programs and activation of windows 10 and office 2016
 #Open a powershell windows (is recommended to open it with admin) then copy and paste the command from the first line
@@ -72,11 +72,6 @@ if ($graphics -contains "r" -or $graphics -contains "a") {
 	#
 	Write-Host "AMD is not supported by chocolatey, opening web page for manual instalation"
 	Start-Process https://www.amd.com/en/support
-}
-
-# Remove wget alias to use the real wget later on
-while (Test-Path Alias:wget) {
-	Remove-Item Alias:wget
 }
 
 # Install base apps if not installed because they will be needes later
@@ -151,9 +146,10 @@ if (-not (Test-Path "$env:ProgramFiles\7-Zip\7z.exe")) {
 	}
 }
 
-# Install wget if needed
+# Install wget if needed and set the alias to webget to avoid alias collision
 if (-not (Test-Path "$env:ProgramData\chocolatey\bin\wget.exe")) {
 	choco install wget -y
+	Set-Alias webget "$env:ProgramData\chocolatey\bin\wget.exe"
 }
 
 # Set the 7z alias to extract files
@@ -205,17 +201,17 @@ Function GDownload {
 		choco install sed -y
 	}
 
-	# Use normal wget if cookies are not needed (file is less than 100mb)
+	# Use normal webget if cookies are not needed (file is less than 100mb)
 	if (-not $useCookies) {
-		wget $arguments -O $fileDestination "https://docs.google.com/uc?export=download&id=$googleFileId"
+		webget $arguments -O $fileDestination "https://docs.google.com/uc?export=download&id=$googleFileId"
 		return
 	}
 	# Define path for temporal cookies
 	$cookies="$env:ProgramData\temp_gdrive_cookies"
 	# Save cookies and the confirm string for the download
-	$confirm = wget --save-cookies $cookies "https://docs.google.com/uc?export=download&id=$googleFileId" -O- | sed -rn "s/.*confirm=([0-9A-Za-z_]+).*/\1/p"
+	$confirm = webget --save-cookies $cookies "https://docs.google.com/uc?export=download&id=$googleFileId" -O- | sed -rn "s/.*confirm=([0-9A-Za-z_]+).*/\1/p"
 	# Download file using temporal cookies and the confirm string
-	wget $arguments --load-cookies $cookies -O $fileDestination "https://docs.google.com/uc?export=download&id=$googleFileId&confirm=$confirm"
+	webget $arguments --load-cookies $cookies -O $fileDestination "https://docs.google.com/uc?export=download&id=$googleFileId&confirm=$confirm"
 	# Remove cookies
 	Remove-Item $cookies
 }
@@ -630,7 +626,7 @@ if ($job -ne 2) {
 
 	# Download KMSAuto for windows activation
 	mkdir -f "$env:ProgramData\KMSAutoS"
-	wget --continue --output-document="$env:ProgramData\KMSAutoS\KMSAuto Net.exe" "https://github.com/DeadKper/Windows10Script/raw/main/Files/KMSAutoS/KMSAuto%20Net.exe"
+	webget --continue --output-document="$env:ProgramData\KMSAutoS\KMSAuto Net.exe" "https://github.com/DeadKper/Windows10Script/raw/main/Files/KMSAutoS/KMSAuto%20Net.exe"
 	Set-Alias kms "$env:ProgramData\KMSAutoS\KMSAuto Net.exe"
 	kms /win=act /off=act /sound=no
 
@@ -643,7 +639,7 @@ if ($job -ne 2) {
 #
 Write-Host "Running O & O Shutup with Recommended Settings"
 mkdir -f "$env:ProgramData\OOSU"
-wget --continue --output-document="$env:ProgramData\OOSU\OOSU10.exe" "https://github.com/DeadKper/Windows10Script/raw/main/Files/OOSU/OOSU10.exe"
-wget --continue --output-document="$env:ProgramData\OOSU\ooshutup10.cfg" "https://raw.githubusercontent.com/DeadKper/Windows10Script/main/Files/OOSU/ooshutup10.cfg"
+webget --continue --output-document="$env:ProgramData\OOSU\OOSU10.exe" "https://github.com/DeadKper/Windows10Script/raw/main/Files/OOSU/OOSU10.exe"
+webget --continue --output-document="$env:ProgramData\OOSU\ooshutup10.cfg" "https://raw.githubusercontent.com/DeadKper/Windows10Script/main/Files/OOSU/ooshutup10.cfg"
 Set-Alias OOSU "$env:ProgramData\OOSU\OOSU10.exe"
 OOSU $env:ProgramData\OOSU\ooshutup10.cfg /quiet
