@@ -86,6 +86,7 @@ if (-not (Test-Path "$env:ProgramData\chocolatey\choco.exe")) {
 	[System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072
 	Invoke-Expression ((New-Object System.Net.WebClient).DownloadString("https://chocolatey.org/install.ps1"))
 }
+
 if (-not (Test-Path "$env:ProgramFiles\7-Zip\7z.exe")) {
 	choco install 7zip -y
 	$7zipFiles = @(
@@ -149,11 +150,10 @@ if (-not (Test-Path "$env:ProgramFiles\7-Zip\7z.exe")) {
 		# New-ItemProperty -Path "HKCR:\7-Zip.$type\shell\open\command" -Name "(Default)" -Type String -Value """$env:ProgramFiles\7-Zip\7zFM.exe"" ""%1"""
 	}
 }
+
+# Install wget if needed
 if (-not (Test-Path "$env:ProgramData\chocolatey\bin\wget.exe")) {
 	choco install wget -y
-}
-if (-not (Test-Path "$env:ProgramData\chocolatey\bin\sed.exe")) {
-	choco install sed -y
 }
 
 # Set the 7z alias to extract files
@@ -200,6 +200,11 @@ Function GDownload {
 		[bool]$useCookies,
 		[string]$arguments
 	)
+	# Only install sed if needed
+	if (-not (Test-Path "$env:ProgramData\chocolatey\bin\sed.exe")) {
+		choco install sed -y
+	}
+
 	# Use normal wget if cookies are not needed (file is less than 100mb)
 	if (-not $useCookies) {
 		wget $arguments -O $fileDestination "https://docs.google.com/uc?export=download&id=$googleFileId"
@@ -618,13 +623,17 @@ if ($job -ne 2) {
 		"HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Schedule\TaskCache\Tree\KMSAutoNet"
 		"HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Schedule\TaskCache\Tree\KMSAutoNet"
 	)
+
 	foreach ($path in $KMSPaths) {
 		Add-MpPreference -ExclusionPath $path
 	}
+
+	# Download KMSAuto for windows activation
 	mkdir -f "$env:ProgramData\KMSAutoS"
 	wget --continue --output-document="$env:ProgramData\KMSAutoS\KMSAuto Net.exe" "https://github.com/DeadKper/Windows10Script/raw/main/Files/KMSAutoS/KMSAuto%20Net.exe"
 	Set-Alias kms "$env:ProgramData\KMSAutoS\KMSAuto Net.exe"
 	kms /win=act /off=act /sound=no
+
 	# Sleep thread for 1 min and reenable windows defender
 	Write-Host "Sleeping thread to activate windows for 60 seconds"
 	Start-Sleep -Seconds 60
