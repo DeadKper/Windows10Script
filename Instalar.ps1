@@ -1,7 +1,7 @@
 #Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; Invoke-Expression ((New-Object System.Net.WebClient).DownloadString("https://raw.githubusercontent.com/DeadKper/Windows10Script/main/Instalar.ps1?token=AINZBETP3VJ6LYLMBQBU2BK73HH26"))
 
 #https://git.io/JLGaJ
-#ver 0.5.1
+#ver 0.5.2
 
 # Recive parameter elevated
 param([switch]$elevated)
@@ -28,12 +28,8 @@ while($True) {
 	Write-Host "0.- Exit"
 	# Read option
 	$job = Read-Host -Prompt " >"
-	# If a non alphanumeric value is entered then loop
-	if($job -notmatch "^\d$") {
-		continue
-	}
-	# If a value greater than the displayed options is submited then loop
-	if($job -gt 3) {
+	# If a non alphanumeric value is entered or value typed is invalid then loop
+	if($job -notmatch "^[0-3]$") {
 		continue
 	}
 	# If the exit value is entered then close the console
@@ -43,6 +39,19 @@ while($True) {
 	# Reduce job value by 1 to start from 0 and break the loop
 	$job=$job - 1
 	break
+}
+
+while($action -notmatch "^[1-4]$") {
+	# Clear console
+	Clear-Host
+	# Display menu
+	Write-Host "Dictate action when the program is completed"
+	Write-Host "1.- Turn off the computer"
+	Write-Host "2.- Reboot"
+	Write-Host "3.- Close the program"
+	Write-Host "4.- Nothing"
+	# Read option
+	$action = Read-Host -Prompt ">"
 }
 
 
@@ -171,11 +180,15 @@ if (-not (Test-Path "$env:ProgramFiles\7-Zip\7z.exe")) {
 # Install wget if needed and set the alias to webget to avoid alias collision
 if (-not (Test-Path "$env:ProgramData\chocolatey\bin\wget.exe")) {
 	choco install wget -y
-	Set-Alias webget "$env:ProgramData\chocolatey\bin\wget.exe"
 }
 
-# Set the 7z alias to extract files
+if (-not (Test-Path "$env:ProgramData\chocolatey\lib\shutup10\tools\OOSU10.exe")) {
+	choco install shutup10 -y
+}
+
+# Set the 7z alias to extract files and wget to use it later
 Set-Alias 7z "$env:ProgramFiles\7-Zip\7z.exe"
+Set-Alias webget "$env:ProgramData\chocolatey\bin\wget.exe"
 
 # Create app instalation string
 if ($job -ne 2) {
@@ -265,6 +278,11 @@ Function GDownload {
 Write-Host "Creating Restore Point incase something bad happens"
 Enable-ComputerRestore -Drive "$env:SystemDrive\"
 Checkpoint-Computer -Description "RestorePoint1" -RestorePointType "MODIFY_SETTINGS"
+
+webget --continue --output-document="$env:ProgramData\security-updates-only.reg" "https://raw.githubusercontent.com/ChrisTitusTech/win10script/master/security-updates-only.reg"
+Get-Command reg
+reg import "$env:ProgramData\security-updates-only.reg"
+Remove-Item "$env:ProgramData\security-updates-only.reg"
 
 #
 Write-Host "Disable bandwith windows limit"
@@ -618,17 +636,20 @@ if ($job -ne 2) {
 	# Temporary disable windows defender
 	Set-MpPreference -DisableRealtimeMonitoring $true
 	#
-	$fileName="$env:ProgramData\Office\Office.7z"
-	Write-Host "Downloading Microsoft Office 2016"
-	mkdir -f "$env:ProgramData\Office"
-	GDownload "1S0X76A3eCo4Hm9SqeNcqfUoe1nER-OLP" $fileName $True ""
-	7z x $fileName -o"$env:ProgramData\Office" -r
-	Remove-Item $fileName
+	if (-not (Test-Path "$env:ProgramFiles\Microsoft Office\Office16")) {
+		$office = $True
+		$fileName="$env:ProgramData\Office\Office.7z"
+		Write-Host "Downloading Microsoft Office 2016"
+		mkdir -f "$env:ProgramData\Office"
+		GDownload "1S0X76A3eCo4Hm9SqeNcqfUoe1nER-OLP" $fileName $True ""
+		7z x $fileName -o"$env:ProgramData\Office" -r
+		Remove-Item $fileName
 
-	#
-	Write-Host "Installing Microsoft Office 2016"
-	Set-Alias office "$env:ProgramData\Office\setup.exe"
-	office /adminfile $env:ProgramData\Office\auto.msp
+		#
+		Write-Host "Installing Microsoft Office 2016"
+		Set-Alias office "$env:ProgramData\Office\setup.exe"
+		office /adminfile $env:ProgramData\Office\auto.msp
+	}
 
 	#
 	Write-Host "Running KMSAuto to validate windows"
@@ -684,9 +705,26 @@ if ($job -ne 2) {
 
 #
 Write-Host "Running O&O Shutup with Recommended Settings"
-mkdir -f "$env:ProgramData\OOSU"
-webget --continue --output-document="$env:ProgramData\OOSU\OOSU10.exe" "https://github.com/DeadKper/Windows10Script/raw/main/Files/OOSU/OOSU10.exe"
-# Config file is the same as the one used by ChrisTitusTech but this makes sure the o&o shut up and the config file are from the same version
-webget --continue --output-document="$env:ProgramData\OOSU\ooshutup10.cfg" "https://raw.githubusercontent.com/DeadKper/Windows10Script/main/Files/OOSU/ooshutup10.cfg"
-Set-Alias OOSU "$env:ProgramData\OOSU\OOSU10.exe"
+webget --continue --output-document="$env:ProgramData\ooshutup10.cfg" "https://raw.githubusercontent.com/ChrisTitusTech/win10script/master/ooshutup10.cfg"
+Set-Alias OOSU "$env:ProgramData\chocolatey\lib\shutup10\tools\OOSU10.exe"
 OOSU $env:ProgramData\OOSU\ooshutup10.cfg /quiet
+Remove-Item "$env:ProgramData\ooshutup10.cfg"
+
+if ($office) {
+	$installingOffice = Get-Process setup -ErrorAction SilentlyContinue
+	while($installingOffice) {
+		Write-Host "Office is being installed, waiting 10 seconds to check again..."
+		Start-Sleep -Seconds 10
+		$installingOffice = Get-Process setup -ErrorAction SilentlyContinue
+	}
+	Remove-Item -Recurse -Force "$env:ProgramData\Office"
+}
+
+Write-Host "Program has finished successfully"
+
+switch ($action) {
+	1 {Restart-Computer}
+	2 {Stop-Computer}
+	3 {exit}
+	4 {}
+}
