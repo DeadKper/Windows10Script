@@ -226,17 +226,17 @@ if ($job -ne 2) {
 	$reg = "Registry::HKLM\System\CurrentControlSet\Control\Session Manager\Environment"
 	$path = (Get-ItemProperty -Path "$reg" -Name PATH).Path
 	if ($path -notmatch "AdoptOpenJDK") {
-		foreach ($dir in (Get-ChildItem "$env:ProgramFiles\AdoptOpenJDK").name) {
+		foreach ($dir in (Get-ChildItem "${env:ProgramFiles}\AdoptOpenJDK").name) {
 			if ($dir -match "jre") {
-				Set-ItemProperty -Path "$reg" -Name PATH –Value "$path;$env:ProgramFiles\AdoptOpenJDK\$dir\bin"
+				Set-ItemProperty -Path "$reg" -Name PATH -Value "${path};${env:ProgramFiles}\AdoptOpenJDK\${dir}\bin"
 				if (-not $useJdkForJavaHome -and -not $java) {
-					$java_home = "$env:ProgramFiles\AdoptOpenJDK\$dir"
+					$java_home = "${env:ProgramFiles}\AdoptOpenJDK\${dir}"
 				}
 			}
 			if ($dir -match "jdk") {
-				Set-ItemProperty -Path "$reg" -Name PATH –Value "$path;$env:ProgramFiles\AdoptOpenJDK\$dir\bin"
+				Set-ItemProperty -Path "$reg" -Name PATH -Value "${path};${env:ProgramFiles}\AdoptOpenJDK\${dir}\bin"
 				if ($useJdkForJavaHome -and -not $java) {
-					$java_home = "$env:ProgramFiles\AdoptOpenJDK\$dir"
+					$java_home = "${env:ProgramFiles}\AdoptOpenJDK\${dir}"
 				}
 			}
 		}
