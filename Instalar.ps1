@@ -222,17 +222,16 @@ if ($job -ne 2) {
 	}
 
 	# Add java to path
-	$reg = "Registry::HKLM\System\CurrentControlSet\Control\Session Manager\Environment"
-	foreach ($dir in (Get-ChildItem "${env:ProgramFiles}\AdoptOpenJDK").name) {
-		if ($dir -match "jre" -and -not $useJdkForJavaHome) {
-			$java_home = "${env:ProgramFiles}\AdoptOpenJDK\${dir}"
-		}
-		if ($dir -match "jdk" -and $useJdkForJavaHome) {
-			$java_home = "${env:ProgramFiles}\AdoptOpenJDK\${dir}"
-		}
-	}
 	if(-not $java) {
-		New-ItemProperty -Path "$reg" -Name "JAVA_HOME" -Type String -Value "$java_home"
+		foreach ($dir in (Get-ChildItem "${env:ProgramFiles}\AdoptOpenJDK").name) {
+			if ($dir -match "jre" -and -not $useJdkForJavaHome) {
+				$java_home = "${env:ProgramFiles}\AdoptOpenJDK\${dir}"
+			}
+			if ($dir -match "jdk" -and $useJdkForJavaHome) {
+				$java_home = "${env:ProgramFiles}\AdoptOpenJDK\${dir}"
+			}
+		}
+		New-ItemProperty -Path "Registry::HKLM\System\CurrentControlSet\Control\Session Manager\Environment" -Name "JAVA_HOME" -Type String -Value "$java_home"
 	}
 }
 
