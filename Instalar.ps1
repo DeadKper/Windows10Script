@@ -631,7 +631,6 @@ if ($job -ne 2) {
 	Set-MpPreference -DisableRealtimeMonitoring $true
 	#
 	if (-not (Test-Path "$env:ProgramFiles\Microsoft Office\Office16")) {
-		$office = $True
 		$fileName="$env:ProgramData\Office\Office.7z"
 		Write-Host "Downloading Microsoft Office 2016"
 		mkdir -f "$env:ProgramData\Office"
@@ -689,12 +688,7 @@ if ($job -ne 2) {
 	mkdir -f "$env:ProgramData\KMSAutoS"
 	webget --continue --output-document="$env:ProgramData\KMSAutoS\KMSAuto Net.exe" "https://github.com/DeadKper/Windows10Script/raw/main/Files/KMSAutoS/KMSAuto%20Net.exe"
 	Set-Alias kms "$env:ProgramData\KMSAutoS\KMSAuto Net.exe"
-	kms /win=act /off=act /sound=no
-
-	# Sleep thread for 1 min and reenable windows defender
-	Write-Host "Sleeping thread to activate windows for 60 seconds"
-	Start-Sleep -Seconds 60
-	Set-MpPreference -DisableRealtimeMonitoring $false
+	kms /win=act /off=act /task=yes /sound=no
 }
 
 #
@@ -704,15 +698,20 @@ Set-Alias OOSU "$env:ProgramData\chocolatey\lib\shutup10\tools\OOSU10.exe"
 OOSU $env:ProgramData\OOSU\ooshutup10.cfg /quiet
 Remove-Item "$env:ProgramData\ooshutup10.cfg"
 
-if ($office) {
-	$installingOffice = Get-Process setup -ErrorAction SilentlyContinue
-	while($installingOffice) {
+if ($job -ne 2) {
+	while(Get-Process setup -ErrorAction SilentlyContinue) {
 		Write-Host "Office is being installed, waiting 10 seconds to check again..."
 		Start-Sleep -Seconds 10
-		$installingOffice = Get-Process setup -ErrorAction SilentlyContinue
 	}
 	Remove-Item -Recurse -Force "$env:ProgramData\Office"
+
+	while(Get-Process "KMSAuto Net" -ErrorAction SilentlyContinue) {
+		Write-Host "Windows is being activated, waiting 10 seconds to check again..."
+		Start-Sleep -Seconds 10
+	}
 }
+
+Set-MpPreference -DisableRealtimeMonitoring $false
 
 Write-Host "Program has finished successfully"
 
