@@ -198,7 +198,7 @@ if ($job -ne 2) {
 		$apps.add("discord")
 		$apps.add("steam")
 		$apps.add("origin")
-		$apps.add("battle.net")
+		$apps.add("battle.net --allow-empty-checksums")
 		$apps.add("epicgameslauncher")
 		$apps.add("vscode")
 		$apps.add("paint.net")
