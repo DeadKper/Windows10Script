@@ -14,6 +14,7 @@ if ([Security.Principal.WindowsIdentity]::GetCurrent().Groups -notcontains "S-1-
 	exit
 }
 # Running in admin
+$ErrorActionPreference = "SilentlyContinue"
 
 # Ask for the job to do and loop until a valid option is entered
 $job=""
