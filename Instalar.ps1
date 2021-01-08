@@ -1,7 +1,7 @@
 #Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; Invoke-Expression ((New-Object System.Net.WebClient).DownloadString("https://raw.githubusercontent.com/DeadKper/Windows10Script/main/Instalar.ps1?token=AINZBETP3VJ6LYLMBQBU2BK73HH26"))
 
 #https://git.io/JLGaJ
-#ver 0.5.0
+#ver 0.5.1
 
 # Recive parameter elevated
 param([switch]$elevated)
@@ -28,16 +28,10 @@ while($True) {
 	Write-Host "0.- Exit"
 	# Read option
 	$job = Read-Host -Prompt " >"
-	# If no option is submited then assing job then loop
-	if (-not $job) {
-		continue
-	}
 	# If a non alphanumeric value is entered then loop
-	if($job -notmatch "^[0-9]{1,9}$") {
+	if($job -notmatch "^\d$") {
 		continue
 	}
-	# Parse the string to a int value
-	$job=[int]::Parse($job)
 	# If a value greater than the displayed options is submited then loop
 	if($job -gt 3) {
 		continue
@@ -51,14 +45,44 @@ while($True) {
 	break
 }
 
-#
-Write-Host "Leave empty or press a different character then the 4 asked to skip this process"
-$graphics = Read-Host -Prompt "Insert graphics to install: [I]ntel, [N]vidia, [A]md/[R]adeon"
-if ($graphics -contains "r" -or $graphics -contains "a") {
-	#
-	Write-Host "AMD is not supported by chocolatey, opening web page for manual instalation"
-	Start-Process https://www.amd.com/en/support
+
+$java = (Get-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" | Select-Object -ExpandProperty "JAVA_HOME" -ErrorAction SilentlyContinue)
+while($job -eq 1 -and -not $java) {
+	# Clear console
+	Clear-Host
+	# Display menu
+	Write-Host "Select the JAVA_HOME to set"
+	Write-Host "1.- jdk"
+	Write-Host "2.- jre"
+	# Read option
+	$useJdkForJavaHome = Read-Host -Prompt " >"
+	# If a non alphanumeric value is entered then loop
+	if($useJdkForJavaHome -match "^1$") {
+		$useJdkForJavaHome = $True
+		break
+	} elseif ($useJdkForJavaHome -match "^2$") {
+		$useJdkForJavaHome = $False
+		break
+	}
 }
+
+#
+
+$graphics = (Get-WmiObject win32_VideoController).Name
+if ($graphics -notlike "radeon*|intel*|nvidia*|amd*" -and $job -ne 2) {
+	Clear-Host
+	Write-Host "Leave empty or press a different character than the 4 asked to skip this process"
+	$graphics = Read-Host -Prompt "Insert graphics to install: [I]ntel, [N]vidia, [A]md/[R]adeon"
+	if ($graphics -match "a|r") {
+		#
+		Write-Host "AMD is not supported by chocolatey, opening web page for manual instalation"
+		Start-Process https://www.amd.com/en/support
+	}
+}
+
+
+# Last clear to start the config process
+Clear-Host
 
 # Add all registry for later use
 if (!(Test-Path "HKU:")) {
@@ -155,7 +179,7 @@ Set-Alias 7z "$env:ProgramFiles\7-Zip\7z.exe"
 
 # Create app instalation string
 if ($job -ne 2) {
-	[System.Collections.ArrayList]$apps = "javaruntime", "firefox"
+	[System.Collections.ArrayList]$apps = "adoptopenjdk8openj9jre", "firefox"
 
 	if ($job -eq 1) {
 		$apps.add("discord")
@@ -169,20 +193,43 @@ if ($job -ne 2) {
 		$apps.add("bitwarden")
 		$apps.add("goggalaxy")
 		$apps.add("cheatengine")
-		$apps.add("AdoptOpenJDK15openj9")
+		$apps.add("adoptopenjdkopenj9")
 		$apps.add("python3")
 		$apps.add("powertoys")
 	}
 
-	if ($graphics -contains "n") {
+	if ($graphics -match "n") {
 		$apps.add("geforce-experience")
-	} elseif ($graphics -contains "i") {
+	} elseif ($graphics -match "i") {
 		$apps.add("intel-graphics-driver")
 	}
 
 	# Install choco apps
 	foreach ($app in $apps) {
 		choco install $app -y
+	}
+
+	# Add java to path
+	$reg = "Registry::HKLM\System\CurrentControlSet\Control\Session Manager\Environment"
+	$path = (Get-ItemProperty -Path "$reg" -Name PATH).Path
+	if ($path -notmatch "AdoptOpenJDK") {
+		foreach ($dir in (Get-ChildItem "${env:ProgramFiles}\AdoptOpenJDK").name) {
+			if ($dir -match "jre") {
+				Set-ItemProperty -Path "$reg" -Name PATH –Value "${path};${env:ProgramFiles}\AdoptOpenJDK\${dir}\bin"
+				if (-not $useJdkForJavaHome -and -not $java) {
+					$java_home = "${env:ProgramFiles}\AdoptOpenJDK\${dir}"
+				}
+			}
+			if ($dir -match "jdk") {
+				Set-ItemProperty -Path "$reg" -Name PATH –Value "${path};${env:ProgramFiles}\AdoptOpenJDK\${dir}\bin"
+				if ($useJdkForJavaHome -and -not $java) {
+					$java_home = "${env:ProgramFiles}\AdoptOpenJDK\${dir}"
+				}
+			}
+		}
+		if(-not $java) {
+			New-ItemProperty -Path "$reg" -Name "JAVA_HOME" -Type String -Value "$java_home"
+		}
 	}
 }
 
@@ -214,7 +261,7 @@ Function GDownload {
 	Remove-Item $cookies
 }
 
-#
+# This config is directly copied from the debloat script of ChrisTitusTech
 Write-Host "Creating Restore Point incase something bad happens"
 Enable-ComputerRestore -Drive "$env:SystemDrive\"
 Checkpoint-Computer -Description "RestorePoint1" -RestorePointType "MODIFY_SETTINGS"
@@ -564,6 +611,7 @@ Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Search
 #
 Write-Host "Hiding Taskbar Search icon / box..."
 Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Search" -Name "SearchboxTaskbarMode" -Type DWord -Value 0
+# Copied code from ChrisTitusTech ends here
 
 # Check if the config only option is not the one picked by the user
 if ($job -ne 2) {
@@ -635,9 +683,10 @@ if ($job -ne 2) {
 }
 
 #
-Write-Host "Running O & O Shutup with Recommended Settings"
+Write-Host "Running O&O Shutup with Recommended Settings"
 mkdir -f "$env:ProgramData\OOSU"
 webget --continue --output-document="$env:ProgramData\OOSU\OOSU10.exe" "https://github.com/DeadKper/Windows10Script/raw/main/Files/OOSU/OOSU10.exe"
+# Config file is the same as the one used by ChrisTitusTech but this makes sure the o&o shut up and the config file are from the same version
 webget --continue --output-document="$env:ProgramData\OOSU\ooshutup10.cfg" "https://raw.githubusercontent.com/DeadKper/Windows10Script/main/Files/OOSU/ooshutup10.cfg"
 Set-Alias OOSU "$env:ProgramData\OOSU\OOSU10.exe"
 OOSU $env:ProgramData\OOSU\ooshutup10.cfg /quiet
