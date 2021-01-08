@@ -9,5 +9,5 @@ Admins privilege is not needed since it has code to elevate itself but it's reco
 
 - Credits
 
-Some code and files are from the win10srcipt repo of ChrisTitusTech
+Some code and files are from the win10script repo of ChrisTitusTech
 https://github.com/ChrisTitusTech/win10script/
