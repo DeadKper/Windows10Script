@@ -210,6 +210,7 @@ if ($job -ne 2) {
 		$apps.add("python3")
 		$apps.add("powertoys")
 		$apps.add("nodejs")
+		$apps.add("gradle")
 	}
 
 	if ($graphics -match "n") {
