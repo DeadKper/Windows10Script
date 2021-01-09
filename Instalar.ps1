@@ -209,6 +209,7 @@ if ($job -ne 2) {
 		$apps.add("adoptopenjdkopenj9")
 		$apps.add("python3")
 		$apps.add("powertoys")
+		$apps.add("nodejs")
 	}
 
 	if ($graphics -match "n") {
