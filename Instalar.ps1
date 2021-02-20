@@ -25,19 +25,22 @@ while($True) {
 	Write-Host "1.- Normal install"
 	Write-Host "2.- Full install"
 	Write-Host "3.- Configuration only"
+	Write-Host "4.- VM setup"
 	Write-Host "0.- Exit"
 	# Read option
 	$job = Read-Host -Prompt " >"
 	# If a non alphanumeric value is entered or value typed is invalid then loop
-	if($job -notmatch "^[0-3]$") {
+	if($job -notmatch "^[0-4]$") {
 		continue
 	}
 	# If the exit value is entered then close the console
 	if($job -eq 0) {
 		exit
 	}
-	# Reduce job value by 1 to start from 0 and break the loop
-	$job=$job - 1
+	if($job -eq 4) {
+		$action=4
+		$useJdkForJavaHome = $False
+	}
 	break
 }
 
@@ -56,7 +59,7 @@ while($action -notmatch "^[1-4]$") {
 
 
 $java = (Get-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" | Select-Object -ExpandProperty "JAVA_HOME" -ErrorAction SilentlyContinue)
-while($job -eq 1 -and -not $java) {
+while($job -eq 2 -and -not $java) {
 	# Clear console
 	Clear-Host
 	# Display menu
@@ -78,7 +81,7 @@ while($job -eq 1 -and -not $java) {
 #
 
 $graphics = (Get-WmiObject win32_VideoController).Name
-if ($graphics -notlike "radeon*|intel*|nvidia*|amd*" -and $job -ne 2) {
+if ($graphics -notlike "radeon*|intel*|nvidia*|amd*" -and $job -ne 3) {
 	Clear-Host
 	Write-Host "Leave empty or press a different character than the 4 asked to skip this process"
 	$graphics = Read-Host -Prompt "Insert graphics to install: [I]ntel, [N]vidia, [A]md/[R]adeon"
@@ -191,10 +194,10 @@ Set-Alias 7z "$env:ProgramFiles\7-Zip\7z.exe"
 Set-Alias webget "$env:ProgramData\chocolatey\bin\wget.exe"
 
 # Create app instalation string
-if ($job -ne 2) {
+if ($job -ne 3) {
 	[System.Collections.ArrayList]$apps = "adoptopenjdk8openj9jre", "firefox"
 
-	if ($job -eq 1) {
+	if ($job -eq 2) {
 		$apps.add("discord")
 		$apps.add("steam")
 		$apps.add("origin")
@@ -211,6 +214,15 @@ if ($job -ne 2) {
 		$apps.add("powertoys")
 		$apps.add("nodejs")
 		$apps.add("gradle")
+	}
+
+	if ($job -eq 4) {
+		$apps.add("steam")
+		$apps.add("origin")
+		$apps.add("battle.net --allow-empty-checksums")
+		$apps.add("epicgameslauncher")
+		$apps.add("goggalaxy")
+		$apps.add("cheatengine")
 	}
 
 	if ($graphics -match "n") {
@@ -624,11 +636,11 @@ Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Search" 
 # Copied code from ChrisTitusTech ends here
 
 # Check if the config only option is not the one picked by the user
-if ($job -ne 2) {
-	# Temporary disable windows defender
+if ($job -ne 3) {
+	# Temporary disable windows defender and permanent disable in VM
 	Set-MpPreference -DisableRealtimeMonitoring $true
 	#
-	if (-not (Test-Path "$env:ProgramFiles\Microsoft Office\Office16")) {
+	if (-not (Test-Path "$env:ProgramFiles\Microsoft Office\Office16") and $job -ne 4) {
 		$fileName="$env:ProgramData\Office\Office.7z"
 		Write-Host "Downloading Microsoft Office 2016"
 		mkdir -f "$env:ProgramData\Office"
@@ -694,9 +706,8 @@ Write-Host "Running O&O Shutup with Recommended Settings"
 webget --continue --output-document="$env:ProgramData\ooshutup10.cfg" "https://raw.githubusercontent.com/ChrisTitusTech/win10script/master/ooshutup10.cfg"
 Set-Alias OOSU "$env:ProgramData\chocolatey\lib\shutup10\tools\OOSU10.exe"
 OOSU $env:ProgramData\OOSU\ooshutup10.cfg /quiet
-Remove-Item "$env:ProgramData\ooshutup10.cfg"
 
-if ($job -ne 2) {
+if ($job -ne 3) {
 	while(Get-Process setup -ErrorAction SilentlyContinue) {
 		Write-Host "Office is being installed, waiting 10 seconds to check again..."
 		Start-Sleep -Seconds 10
@@ -709,7 +720,9 @@ if ($job -ne 2) {
 	}
 }
 
-Set-MpPreference -DisableRealtimeMonitoring $false
+if ($job -ne 4) {
+	Set-MpPreference -DisableRealtimeMonitoring $false
+}
 
 Write-Host "Program has finished successfully"
 
