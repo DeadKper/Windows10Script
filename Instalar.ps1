@@ -640,7 +640,7 @@ if ($job -ne 3) {
 	# Temporary disable windows defender and permanent disable in VM
 	Set-MpPreference -DisableRealtimeMonitoring $true
 	#
-	if (-not (Test-Path "$env:ProgramFiles\Microsoft Office\Office16") and $job -ne 4) {
+	if (-not (Test-Path "$env:ProgramFiles\Microsoft Office\Office16") -and $job -ne 4) {
 		$fileName="$env:ProgramData\Office\Office.7z"
 		Write-Host "Downloading Microsoft Office 2016"
 		mkdir -f "$env:ProgramData\Office"
