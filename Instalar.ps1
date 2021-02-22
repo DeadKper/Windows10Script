@@ -641,6 +641,76 @@ if ($job -ne 3) {
 	Set-MpPreference -DisableRealtimeMonitoring $True
 	if ($job -eq 4) {
 		Set-NetFirewallProfile -Profile Domain,Public,Private -Enabled False
+		$Drives = @(
+			"A:\"
+			"B:\"
+			"C:\"
+			"D:\"
+			"E:\"
+			"F:\"
+			"G:\"
+			"H:\"
+			"I:\"
+			"J:\"
+			"K:\"
+			"L:\"
+			"M:\"
+			"N:\"
+			"O:\"
+			"P:\"
+			"Q:\"
+			"R:\"
+			"S:\"
+			"T:\"
+			"U:\"
+			"V:\"
+			"W:\"
+			"X:\"
+			"Y:\"
+			"Z:\"
+		)
+
+		foreach ($drive in $Drives) {
+			Add-MpPreference -ExclusionPath $path
+		}
+	} else {
+		$KMSPaths = @(
+			"$env:ProgramData\KMSAutoS"
+			"$env:ProgramData\KMSAutoS\KMSAuto Net.exe"
+			"$env:ProgramData\KMSAutoS\bin\KMSSS.exe"
+			"$env:ProgramData\KMSAutoS\bin\TunMirror.exe"
+			"$env:ProgramData\KMSAutoS\bin\TunMirror2.exe"
+			"$env:ProgramData\KMSAutoS\bin\driver\x64TAP1\devcon.exe"
+			"$env:ProgramData\KMSAutoS\bin\driver\x64TAP2\devcon.exe"
+			"$env:ProgramData\KMSAutoS\bin\driver\x64WDV\FakeClient.exe"
+			"$env:ProgramData\KMSAuto"
+			"$env:ProgramData\KMSAuto\KMSAuto Net.exe"
+			"$env:ProgramData\KMSAuto\bin\KMSSS.exe"
+			"$env:ProgramData\KMSAuto\bin\TunMirror.exe"
+			"$env:ProgramData\KMSAuto\bin\TunMirror2.exe"
+			"$env:ProgramData\KMSAuto\bin\driver\x64TAP1\devcon.exe"
+			"$env:ProgramData\KMSAuto\bin\driver\x64TAP2\devcon.exe"
+			"$env:ProgramData\KMSAuto\bin\driver\x64WDV\FakeClient.exe"
+			"$env:SystemRoot\System32\KMSAuto Net.exe"
+			"$env:SystemRoot\System32\Tasks\KMSAutoNet"
+			"$env:SystemRoot\System32\SppExtComObjHook.dll"
+			"$env:SystemRoot\System32\SppExtComObjPatcher.exe"
+			"$env:LocalAppData\Temp\KMSAutoNet.tmp"
+			"$env:LocalAppData\Temp\KMSAuto\SppExtComObjPatcher.exe"
+			"$env:LocalAppData\Temp\KMSAuto\SppExtComObjHook.dll"
+			"$env:LocalAppData\Temp\KMSAutoS\SppExtComObjPatcher.exe"
+			"$env:LocalAppData\Temp\KMSAutoS\SppExtComObjHook.dll"
+			"$env:LocalAppData\Microsoft\Windows\INetCache\IE\NRI6I6IW\setup_c[1].exe"
+			"$env:AppData\build.exe"
+			"$env:AppData\KMSAuto Net.exe"
+			"$env:AppData\script.vbs"
+			"HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Schedule\TaskCache\Tree\KMSAutoNet"
+			"HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Schedule\TaskCache\Tree\KMSAutoNet"
+		)
+
+		foreach ($path in $KMSPaths) {
+			Add-MpPreference -ExclusionPath $path
+		}
 	}
 	#
 	if (-not (Test-Path "$env:ProgramFiles\Microsoft Office\Office16") -and $job -ne 4) {
@@ -659,43 +729,6 @@ if ($job -ne 3) {
 
 	#
 	Write-Host "Running KMSAuto to validate windows"
-	$KMSPaths = @(
-		"$env:ProgramData\KMSAutoS"
-		"$env:ProgramData\KMSAutoS\KMSAuto Net.exe"
-		"$env:ProgramData\KMSAutoS\bin\KMSSS.exe"
-		"$env:ProgramData\KMSAutoS\bin\TunMirror.exe"
-		"$env:ProgramData\KMSAutoS\bin\TunMirror2.exe"
-		"$env:ProgramData\KMSAutoS\bin\driver\x64TAP1\devcon.exe"
-		"$env:ProgramData\KMSAutoS\bin\driver\x64TAP2\devcon.exe"
-		"$env:ProgramData\KMSAutoS\bin\driver\x64WDV\FakeClient.exe"
-		"$env:ProgramData\KMSAuto"
-		"$env:ProgramData\KMSAuto\KMSAuto Net.exe"
-		"$env:ProgramData\KMSAuto\bin\KMSSS.exe"
-		"$env:ProgramData\KMSAuto\bin\TunMirror.exe"
-		"$env:ProgramData\KMSAuto\bin\TunMirror2.exe"
-		"$env:ProgramData\KMSAuto\bin\driver\x64TAP1\devcon.exe"
-		"$env:ProgramData\KMSAuto\bin\driver\x64TAP2\devcon.exe"
-		"$env:ProgramData\KMSAuto\bin\driver\x64WDV\FakeClient.exe"
-		"$env:SystemRoot\System32\KMSAuto Net.exe"
-		"$env:SystemRoot\System32\Tasks\KMSAutoNet"
-		"$env:SystemRoot\System32\SppExtComObjHook.dll"
-		"$env:SystemRoot\System32\SppExtComObjPatcher.exe"
-		"$env:LocalAppData\Temp\KMSAutoNet.tmp"
-		"$env:LocalAppData\Temp\KMSAuto\SppExtComObjPatcher.exe"
-		"$env:LocalAppData\Temp\KMSAuto\SppExtComObjHook.dll"
-		"$env:LocalAppData\Temp\KMSAutoS\SppExtComObjPatcher.exe"
-		"$env:LocalAppData\Temp\KMSAutoS\SppExtComObjHook.dll"
-		"$env:LocalAppData\Microsoft\Windows\INetCache\IE\NRI6I6IW\setup_c[1].exe"
-		"$env:AppData\build.exe"
-		"$env:AppData\KMSAuto Net.exe"
-		"$env:AppData\script.vbs"
-		"HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Schedule\TaskCache\Tree\KMSAutoNet"
-		"HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Schedule\TaskCache\Tree\KMSAutoNet"
-	)
-
-	foreach ($path in $KMSPaths) {
-		Add-MpPreference -ExclusionPath $path
-	}
 
 	# Download KMSAuto for windows activation
 	mkdir -f "$env:ProgramData\KMSAutoS"
