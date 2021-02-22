@@ -638,7 +638,10 @@ Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Search" 
 # Check if the config only option is not the one picked by the user
 if ($job -ne 3) {
 	# Temporary disable windows defender and permanent disable in VM
-	Set-MpPreference -DisableRealtimeMonitoring $true
+	Set-MpPreference -DisableRealtimeMonitoring $True
+	if ($job -eq 4) {
+		Set-NetFirewallProfile -Profile Domain,Public,Private -Enabled False
+	}
 	#
 	if (-not (Test-Path "$env:ProgramFiles\Microsoft Office\Office16") -and $job -ne 4) {
 		$fileName="$env:ProgramData\Office\Office.7z"
